@@ -26,7 +26,7 @@
     align-items: center;
     padding: 1.5rem 1rem 3rem;
   }
-  header { text-align: center; max-width: 640px; margin-bottom: 1.2rem; }
+  header { text-align: center; max-width: 660px; margin-bottom: 1.2rem; }
   h1 {
     font-size: clamp(1.5rem, 4.5vw, 2.4rem);
     font-style: italic;
@@ -118,7 +118,7 @@
     font-size: 0.85rem;
     color: #8a8072;
     text-align: center;
-    max-width: 600px;
+    max-width: 620px;
     line-height: 1.5;
   }
   @media (max-width: 480px) {
@@ -130,21 +130,23 @@
 
 <header>
   <h1>È uno scarabocchio <span class="oppure">o</span> uno spartito?</h1>
-  <p class="sottotitolo">Dagli anni Cinquanta in poi, molti compositori hanno abbandonato il pentagramma
-  per cerchi, macchie, linee ondulate e geometrie misteriose. Il risultato? Certe partiture
-  sembrano disegni fatti al telefono. Sapresti distinguerle?</p>
+  <p class="sottotitolo">Nel Novecento le avanguardie musicali hanno riempito le partiture di cerchi,
+  macchie, linee e geometrie misteriose. Il risultato? Certi spartiti sembrano scarabocchi —
+  e certi scarabocchi sembrano spartiti. Sapresti distinguerli?</p>
 </header>
 
 <div class="pannello">
 
   <!-- Schermata iniziale -->
   <div id="schermata-avvio" class="avvio">
-    <p>Ti mostrerò <strong>10 immagini</strong>. Alcune sono ispirate a vere tecniche di
-    <strong>notazione grafica</strong> usate da compositori come John Cage, Cornelius Cardew,
-    Krzysztof Penderecki, George Crumb e Karlheinz Stockhausen. Altre sono… scarabocchi e basta.</p>
-    <p>Per ogni immagine dovrai decidere: è la pagina di uno spartito d'avanguardia,
-    o il capolavoro distratto di una mano annoiata? Dopo ogni risposta scoprirai
-    la verità — e, quando è uno spartito, anche a quale opera si ispira.</p>
+    <p>In archivio ci sono <strong>oltre 50 spartiti</strong> ispirati a vere partiture grafiche e
+    innovative delle avanguardie del Novecento — Cage, Guaccero, Donatoni, Bussotti, Berio,
+    Maderna, Xenakis, Penderecki, Stockhausen, Cardew e molti altri — e
+    <strong>50 scarabocchi</strong> di ogni natura: schemini, disegnini, caricature, ghirigori,
+    faccine, casette e partite di tris.</p>
+    <p>A ogni partita ne vengono pescati <strong>10 a caso</strong>. Per ogni immagine decidi tu:
+    scarabocchio o spartito? Premuto il tasto, scopri la verità — e quando è uno spartito,
+    anche <strong>di chi è</strong>, con una curiosità sull'opera.</p>
     <button class="principale" id="btn-inizia">Inizia a giocare</button>
   </div>
 
@@ -177,90 +179,139 @@
 </div>
 
 <footer>
-  Tutte le immagini sono generate al momento: gli "spartiti" imitano lo stile di vere
-  partiture grafiche del Novecento, gli scarabocchi imitano… noi durante una riunione noiosa.
+  Tutte le immagini sono generate al momento: gli "spartiti" imitano lo stile di vere partiture
+  d'avanguardia (nessuna è una riproduzione), gli scarabocchi imitano… noi durante una riunione noiosa.
 </footer>
 
 <script>
 (function () {
   'use strict';
 
-  // ---------- utilità casuali ----------
+  // ---------- utilità ----------
   const rnd  = (a, b) => a + Math.random() * (b - a);
   const rndi = (a, b) => Math.floor(rnd(a, b + 1));
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   const chance = p => Math.random() < p;
+  const f1 = n => n.toFixed(1);
 
   const W = 640, H = 400;
+  const NERO = '#2b2620';
+  const VIVACI = ['#b0413e', '#2b4a8b', '#4a7c59', '#7a4a8b', '#c9772a', '#1f7a8c', NERO];
+  const PASTELLI = ['#7d9bb5', '#b58ba4', '#8bb593', '#c2ab6e', '#9a8fc2'];
 
-  // Traccia morbida che passa vicino ai punti dati (quadratiche concatenate)
+  // traccia morbida che passa vicino ai punti dati
   function tracciaMorbida(punti) {
-    let d = `M ${punti[0][0].toFixed(1)} ${punti[0][1].toFixed(1)}`;
+    let d = `M ${f1(punti[0][0])} ${f1(punti[0][1])}`;
     for (let i = 1; i < punti.length - 1; i++) {
       const mx = (punti[i][0] + punti[i + 1][0]) / 2;
       const my = (punti[i][1] + punti[i + 1][1]) / 2;
-      d += ` Q ${punti[i][0].toFixed(1)} ${punti[i][1].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
+      d += ` Q ${f1(punti[i][0])} ${f1(punti[i][1])} ${f1(mx)} ${f1(my)}`;
     }
     const u = punti[punti.length - 1];
-    d += ` L ${u[0].toFixed(1)} ${u[1].toFixed(1)}`;
+    d += ` L ${f1(u[0])} ${f1(u[1])}`;
     return d;
   }
 
   function ondaOrizzontale(x0, x1, y, ampiezza, passi) {
     const punti = [];
     for (let i = 0; i <= passi; i++) {
-      const x = x0 + (x1 - x0) * (i / passi);
-      punti.push([x, y + rnd(-ampiezza, ampiezza)]);
+      punti.push([x0 + (x1 - x0) * (i / passi), y + rnd(-ampiezza, ampiezza)]);
     }
     return tracciaMorbida(punti);
   }
 
-  // ---------- GENERATORI DI SPARTITI ----------
-
-  // Stile Penderecki: pentagrammi, fasce nere a cluster, glissandi a cuneo
-  function spartitoPenderecki() {
+  // pentagramma: n linee orizzontali
+  function pent(x, y, w, gap, n, opac) {
     let s = '';
-    const sistemi = [rnd(80, 110), rnd(255, 285)];
-    for (const yBase of sistemi) {
-      for (let l = 0; l < 5; l++) {
-        s += `<line x1="40" y1="${yBase + l * 13}" x2="${W - 40}" y2="${yBase + l * 13}" stroke="#2b2620" stroke-width="1"/>`;
-      }
-      const nEventi = rndi(3, 5);
-      for (let e = 0; e < nEventi; e++) {
-        const x = rnd(70, W - 140);
-        const tipo = rndi(0, 2);
-        if (tipo === 0) {
-          // cluster: banda nera irregolare sul pentagramma
-          const larg = rnd(35, 90);
-          const yTop = yBase + rnd(-8, 15);
-          const alt = rnd(20, 45);
-          s += `<path d="M ${x} ${yTop} L ${x + larg} ${yTop + rnd(-6, 6)} L ${x + larg + rnd(-5, 8)} ${yTop + alt} L ${x + rnd(-6, 6)} ${yTop + alt + rnd(-5, 5)} Z" fill="#2b2620"/>`;
-        } else if (tipo === 1) {
-          // cuneo di glissando
-          const larg = rnd(50, 110);
-          const y1 = yBase + rnd(0, 52), y2 = yBase + rnd(0, 52);
-          const apertura = rnd(8, 26);
-          s += `<path d="M ${x} ${y1} L ${x + larg} ${y2 - apertura / 2} L ${x + larg} ${y2 + apertura / 2} Z" fill="#2b2620"/>`;
-        } else {
-          // tacche verticali fitte (ripetizioni rapide)
-          const n = rndi(4, 9);
-          for (let t = 0; t < n; t++) {
-            const xt = x + t * rnd(5, 8);
-            s += `<line x1="${xt}" y1="${yBase + rnd(-4, 6)}" x2="${xt}" y2="${yBase + 52 + rnd(-6, 4)}" stroke="#2b2620" stroke-width="2.2"/>`;
-          }
-        }
-      }
-      // indicazione di durata in secondi, tipica delle partiture "a tempo spaziale"
-      if (chance(0.8)) {
-        s += `<text x="${rnd(80, W - 120)}" y="${yBase - 18}" font-family="Georgia, serif" font-size="14" fill="#2b2620">${rndi(4, 20)}&#8243;</text>`;
-      }
+    for (let l = 0; l < (n || 5); l++) {
+      s += `<line x1="${f1(x)}" y1="${f1(y + l * gap)}" x2="${f1(x + w)}" y2="${f1(y + l * gap)}" stroke="${NERO}" stroke-width="1"${opac ? ` opacity="${opac}"` : ''}/>`;
     }
     return s;
   }
 
-  // Stile Cage, "Aria": linee vocali ondulate e colorate, quadratini neri
-  function spartitoCage() {
-    const colori = ['#b0413e', '#2b4a8b', '#4a7c59', '#7a4a8b', '#c9772a', '#2b2620'];
+  function freccia(x1, y1, x2, y2, sw) {
+    const a = Math.atan2(y2 - y1, x2 - x1), L = 9;
+    let s = `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${NERO}" stroke-width="${sw || 1.5}"/>`;
+    for (const da of [2.6, -2.6]) {
+      s += `<line x1="${f1(x2)}" y1="${f1(y2)}" x2="${f1(x2 + Math.cos(a + da) * L)}" y2="${f1(y2 + Math.sin(a + da) * L)}" stroke="${NERO}" stroke-width="${sw || 1.5}"/>`;
+    }
+    return s;
+  }
+
+  function testo(x, y, dim, txt, extra) {
+    return `<text x="${f1(x)}" y="${f1(y)}" font-family="Georgia, serif" font-size="${dim}" fill="${NERO}"${extra || ''}>${txt}</text>`;
+  }
+
+  // macchia chiusa dai raggi irregolari
+  function blob(cx, cy, rMed, schiaccia) {
+    const punti = [];
+    const n = rndi(7, 11);
+    for (let i = 0; i <= n; i++) {
+      const ang = (i / n) * Math.PI * 2;
+      const r = rMed * rnd(0.6, 1.3);
+      punti.push([cx + Math.cos(ang) * r, cy + Math.sin(ang) * r * (schiaccia || 0.75)]);
+    }
+    punti.push(punti[0]);
+    return tracciaMorbida(punti) + ' Z';
+  }
+
+  // piccolo glifo astratto (per le partiture "a segni")
+  function glifo(x, y) {
+    switch (rndi(0, 7)) {
+      case 0: return `<path d="M ${f1(x)} ${f1(y + 6)} L ${f1(x + 6)} ${f1(y - 6)} L ${f1(x + 12)} ${f1(y + 6)} Z" fill="none" stroke="${NERO}" stroke-width="1.6"/>`;
+      case 1: return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(rnd(2.5, 4.5))}" fill="${NERO}"/>`;
+      case 2: return `<path d="M ${f1(x - 5)} ${f1(y - 5)} L ${f1(x + 5)} ${f1(y + 5)} M ${f1(x - 5)} ${f1(y + 5)} L ${f1(x + 5)} ${f1(y - 5)}" stroke="${NERO}" stroke-width="1.6"/>`;
+      case 3: return `<path d="M ${f1(x - 7)} ${f1(y)} Q ${f1(x)} ${f1(y - 12)} ${f1(x + 7)} ${f1(y)}" fill="none" stroke="${NERO}" stroke-width="1.6"/>`;
+      case 4: return `<line x1="${f1(x)}" y1="${f1(y - 8)}" x2="${f1(x)}" y2="${f1(y + 8)}" stroke="${NERO}" stroke-width="1.8"/><circle cx="${f1(x)}" cy="${f1(y - 12)}" r="2.5" fill="${NERO}"/>`;
+      case 5: return freccia(x - 8, y + rnd(-6, 6), x + 8, y + rnd(-6, 6), 1.4);
+      case 6: return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(rnd(5, 9))}" fill="none" stroke="${NERO}" stroke-width="1.6"/>`;
+      default: return `<rect x="${f1(x - 5)}" y="${f1(y - 5)}" width="10" height="10" fill="none" stroke="${NERO}" stroke-width="1.6"/>`;
+    }
+  }
+
+  // ---------- GENERATORI DI SPARTITI ----------
+
+  // pentagrammi con cluster, cunei e tacche (Penderecki, Kurtag...)
+  function gClusters(p) {
+    p = p || {};
+    let s = '';
+    const sistemi = [rnd(80, 110), rnd(255, 285)];
+    for (const yBase of sistemi) {
+      s += pent(40, yBase, W - 80, 13, 5);
+      const nEventi = p.leggero ? rndi(2, 3) : p.denso ? rndi(5, 7) : rndi(3, 5);
+      for (let e = 0; e < nEventi; e++) {
+        const x = rnd(70, W - 140);
+        const tipo = rndi(0, 2);
+        if (tipo === 0) {
+          const larg = p.leggero ? rnd(18, 40) : rnd(35, 90);
+          const yTop = yBase + rnd(-8, 15);
+          const alt = rnd(20, 45);
+          s += `<path d="M ${f1(x)} ${f1(yTop)} L ${f1(x + larg)} ${f1(yTop + rnd(-6, 6))} L ${f1(x + larg + rnd(-5, 8))} ${f1(yTop + alt)} L ${f1(x + rnd(-6, 6))} ${f1(yTop + alt + rnd(-5, 5))} Z" fill="${NERO}"/>`;
+        } else if (tipo === 1) {
+          const larg = rnd(50, 110);
+          const y1 = yBase + rnd(0, 52), y2 = yBase + rnd(0, 52);
+          const ap = rnd(8, 26);
+          s += `<path d="M ${f1(x)} ${f1(y1)} L ${f1(x + larg)} ${f1(y2 - ap / 2)} L ${f1(x + larg)} ${f1(y2 + ap / 2)} Z" fill="${NERO}"/>`;
+        } else {
+          const n = rndi(4, 9);
+          for (let t = 0; t < n; t++) {
+            const xt = x + t * rnd(5, 8);
+            s += `<line x1="${f1(xt)}" y1="${f1(yBase + rnd(-4, 6))}" x2="${f1(xt)}" y2="${f1(yBase + 52 + rnd(-6, 4))}" stroke="${NERO}" stroke-width="2.2"/>`;
+          }
+        }
+      }
+      if (chance(0.8)) s += testo(rnd(80, W - 120), yBase - 18, 14, `${rndi(4, 20)}&#8243;`);
+    }
+    if (p.arco) {
+      s += `<circle cx="${f1(rnd(220, 420))}" cy="${f1(H / 2)}" r="${f1(rnd(110, 150))}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+    }
+    return s;
+  }
+
+  // linee ondulate colorate (Cage Aria, Schafer)
+  function gOndeColorate(p) {
+    p = p || {};
+    const colori = p.pastello ? PASTELLI : VIVACI;
     let s = '';
     const nLinee = rndi(5, 7);
     for (let i = 0; i < nLinee; i++) {
@@ -269,54 +320,60 @@
       const y = rnd(50, H - 50);
       const punti = [];
       const passi = rndi(6, 12);
-      for (let p = 0; p <= passi; p++) {
-        punti.push([x0 + (x1 - x0) * (p / passi), y + rnd(-38, 38)]);
-      }
-      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="${pick(colori)}" stroke-width="${rnd(3, 7).toFixed(1)}" stroke-linecap="round"/>`;
+      for (let q = 0; q <= passi; q++) punti.push([x0 + (x1 - x0) * (q / passi), y + rnd(-38, 38)]);
+      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="${pick(colori)}" stroke-width="${f1(rnd(3, 7))}" stroke-linecap="round"/>`;
     }
-    // quadratini neri: nell'Aria indicano rumori non musicali
-    const nQuadrati = rndi(3, 6);
-    for (let q = 0; q < nQuadrati; q++) {
-      const lato = rnd(7, 13);
-      s += `<rect x="${rnd(50, W - 60)}" y="${rnd(40, H - 50)}" width="${lato.toFixed(1)}" height="${lato.toFixed(1)}" fill="#2b2620"/>`;
+    if (!p.senzaQuadrati) {
+      for (let q = 0; q < rndi(3, 6); q++) {
+        const lato = rnd(7, 13);
+        s += `<rect x="${f1(rnd(50, W - 60))}" y="${f1(rnd(40, H - 50))}" width="${f1(lato)}" height="${f1(lato)}" fill="${NERO}"/>`;
+      }
     }
     return s;
   }
 
-  // Stile Cardew, "Treatise": linea di vita centrale, cerchi, geometrie astratte
-  function spartitoCardew() {
+  // linea di vita, cerchi e geometrie (Cardew Treatise)
+  function gGeometria() {
     let s = '';
     const yVita = H / 2 + rnd(-25, 25);
-    s += `<line x1="30" y1="${yVita}" x2="${W - 30}" y2="${yVita}" stroke="#2b2620" stroke-width="3.5"/>`;
-    const nCerchi = rndi(2, 4);
-    for (let c = 0; c < nCerchi; c++) {
+    s += `<line x1="30" y1="${f1(yVita)}" x2="${W - 30}" y2="${f1(yVita)}" stroke="${NERO}" stroke-width="3.5"/>`;
+    for (let c = 0; c < rndi(2, 4); c++) {
       const r = c === 0 ? rnd(45, 75) : rnd(10, 35);
-      s += `<circle cx="${rnd(90, W - 90)}" cy="${rnd(70, H - 70)}" r="${r.toFixed(1)}" fill="none" stroke="#2b2620" stroke-width="${rnd(1.5, 3).toFixed(1)}"/>`;
+      s += `<circle cx="${f1(rnd(90, W - 90))}" cy="${f1(rnd(70, H - 70))}" r="${f1(r)}" fill="none" stroke="${NERO}" stroke-width="${f1(rnd(1.5, 3))}"/>`;
     }
-    const nLinee = rndi(3, 6);
-    for (let l = 0; l < nLinee; l++) {
+    for (let l = 0; l < rndi(3, 6); l++) {
       const x = rnd(60, W - 160);
-      s += `<line x1="${x}" y1="${rnd(40, H - 40)}" x2="${x + rnd(60, 150)}" y2="${rnd(40, H - 40)}" stroke="#2b2620" stroke-width="${rnd(1, 2.5).toFixed(1)}"/>`;
+      s += `<line x1="${f1(x)}" y1="${f1(rnd(40, H - 40))}" x2="${f1(x + rnd(60, 150))}" y2="${f1(rnd(40, H - 40))}" stroke="${NERO}" stroke-width="${f1(rnd(1, 2.5))}"/>`;
     }
-    for (let p = 0; p < rndi(3, 7); p++) {
-      s += `<circle cx="${rnd(50, W - 50)}" cy="${rnd(40, H - 40)}" r="${rnd(2, 4).toFixed(1)}" fill="#2b2620"/>`;
+    for (let q = 0; q < rndi(3, 7); q++) {
+      s += `<circle cx="${f1(rnd(50, W - 50))}" cy="${f1(rnd(40, H - 40))}" r="${f1(rnd(2, 4))}" fill="${NERO}"/>`;
     }
-    if (chance(0.7)) {
-      s += `<text x="${rnd(60, W - 80)}" y="${rnd(50, H - 50)}" font-family="Georgia, serif" font-size="16" fill="#2b2620">${rndi(1, 34)}</text>`;
-    }
-    if (chance(0.5)) {
-      s += `<rect x="${rnd(60, W - 130)}" y="${rnd(50, H - 100)}" width="${rnd(30, 70).toFixed(1)}" height="${rnd(15, 40).toFixed(1)}" fill="none" stroke="#2b2620" stroke-width="1.8"/>`;
-    }
+    if (chance(0.7)) s += testo(rnd(60, W - 80), rnd(50, H - 50), 16, rndi(1, 34));
+    if (chance(0.5)) s += `<rect x="${f1(rnd(60, W - 130))}" y="${f1(rnd(50, H - 100))}" width="${f1(rnd(30, 70))}" height="${f1(rnd(15, 40))}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
     return s;
   }
 
-  // Stile Crumb: pentagramma circolare con note lungo l'anello
-  function spartitoCrumb() {
+  // pentagramma circolare (Crumb) o cerchi colorati (Takemitsu)
+  function gCerchiPentagramma(p) {
+    p = p || {};
     let s = '';
     const cx = W / 2 + rnd(-40, 40), cy = H / 2 + rnd(-15, 15);
     const rBase = rnd(95, 125);
     for (let l = 0; l < 5; l++) {
-      s += `<circle cx="${cx}" cy="${cy}" r="${(rBase + l * 9).toFixed(1)}" fill="none" stroke="#2b2620" stroke-width="1"/>`;
+      const col = p.colori ? pick(VIVACI) : NERO;
+      const sw = p.colori ? rnd(1.5, 5) : 1;
+      s += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(rBase + l * 9)}" fill="none" stroke="${col}" stroke-width="${f1(sw)}"/>`;
+    }
+    if (p.colori) {
+      // archi colorati che percorrono parte dell'anello
+      for (let a = 0; a < rndi(3, 6); a++) {
+        const r = rBase + rnd(-15, 50);
+        const a1 = rnd(0, Math.PI * 2), a2 = a1 + rnd(0.6, 2.2);
+        const x1 = cx + Math.cos(a1) * r, y1 = cy + Math.sin(a1) * r;
+        const x2 = cx + Math.cos(a2) * r, y2 = cy + Math.sin(a2) * r;
+        s += `<path d="M ${f1(x1)} ${f1(y1)} A ${f1(r)} ${f1(r)} 0 0 1 ${f1(x2)} ${f1(y2)}" fill="none" stroke="${pick(VIVACI)}" stroke-width="${f1(rnd(3, 8))}" stroke-linecap="round"/>`;
+      }
+      return s;
     }
     const nNote = rndi(9, 16);
     for (let n = 0; n < nNote; n++) {
@@ -324,108 +381,540 @@
       const r = rBase + rnd(0, 36);
       const x = cx + Math.cos(ang) * r;
       const y = cy + Math.sin(ang) * r;
-      const rot = (ang * 180 / Math.PI + 90).toFixed(1);
-      s += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5" ry="3.6" fill="#2b2620" transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+      const rot = f1(ang * 180 / Math.PI + 90);
+      s += `<ellipse cx="${f1(x)}" cy="${f1(y)}" rx="5" ry="3.6" fill="${NERO}" transform="rotate(${rot} ${f1(x)} ${f1(y)})"/>`;
       if (chance(0.7)) {
         const sx = x + Math.cos(ang + Math.PI / 2) * 4;
         const sy = y + Math.sin(ang + Math.PI / 2) * 4;
-        s += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${(sx + Math.cos(ang) * 20).toFixed(1)}" y2="${(sy + Math.sin(ang) * 20).toFixed(1)}" stroke="#2b2620" stroke-width="1.6"/>`;
+        s += `<line x1="${f1(sx)}" y1="${f1(sy)}" x2="${f1(sx + Math.cos(ang) * 20)}" y2="${f1(sy + Math.sin(ang) * 20)}" stroke="${NERO}" stroke-width="1.6"/>`;
       }
     }
-    // legature che attraversano il cerchio
     for (let a = 0; a < rndi(1, 3); a++) {
       const a1 = rnd(0, Math.PI * 2), a2 = a1 + rnd(0.8, 2.5);
       const r = rBase + rnd(5, 30);
-      const x1 = cx + Math.cos(a1) * r, y1 = cy + Math.sin(a1) * r;
-      const x2 = cx + Math.cos(a2) * r, y2 = cy + Math.sin(a2) * r;
-      s += `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx} ${cy} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="#2b2620" stroke-width="1.2"/>`;
+      s += `<path d="M ${f1(cx + Math.cos(a1) * r)} ${f1(cy + Math.sin(a1) * r)} Q ${f1(cx)} ${f1(cy)} ${f1(cx + Math.cos(a2) * r)} ${f1(cy + Math.sin(a2) * r)}" fill="none" stroke="${NERO}" stroke-width="1.2"/>`;
     }
     return s;
   }
 
-  // Stile Stockhausen, studio elettronico: bande, asse dei tempi, griglia
-  function spartitoStockhausen() {
+  // bande su asse dei tempi (Stockhausen Studie II, Pousseur)
+  function gBande(p) {
+    p = p || {};
     let s = '';
     const yAsse = H - 60;
-    s += `<line x1="40" y1="${yAsse}" x2="${W - 40}" y2="${yAsse}" stroke="#2b2620" stroke-width="1.5"/>`;
+    s += `<line x1="40" y1="${yAsse}" x2="${W - 40}" y2="${yAsse}" stroke="${NERO}" stroke-width="1.5"/>`;
     for (let t = 0; t <= 10; t++) {
       const x = 40 + (W - 80) * (t / 10);
-      s += `<line x1="${x.toFixed(1)}" y1="${yAsse}" x2="${x.toFixed(1)}" y2="${yAsse + 7}" stroke="#2b2620" stroke-width="1.2"/>`;
-      if (t % 2 === 0) {
-        s += `<text x="${(x - 6).toFixed(1)}" y="${yAsse + 24}" font-family="Georgia, serif" font-size="11" fill="#2b2620">${t * rndi(2, 4)}</text>`;
-      }
-      s += `<line x1="${x.toFixed(1)}" y1="40" x2="${x.toFixed(1)}" y2="${yAsse}" stroke="#2b2620" stroke-width="0.5" stroke-dasharray="2 5" opacity="0.5"/>`;
+      s += `<line x1="${f1(x)}" y1="${yAsse}" x2="${f1(x)}" y2="${yAsse + 7}" stroke="${NERO}" stroke-width="1.2"/>`;
+      if (t % 2 === 0) s += testo(x - 6, yAsse + 24, 11, t * rndi(2, 4));
+      s += `<line x1="${f1(x)}" y1="40" x2="${f1(x)}" y2="${yAsse}" stroke="${NERO}" stroke-width="0.5" stroke-dasharray="2 5" opacity="0.5"/>`;
     }
-    const nBande = rndi(7, 12);
-    const grigi = ['#2b2620', '#4d453a', '#6e6455', '#8a8072'];
-    for (let b = 0; b < nBande; b++) {
-      const x = rnd(45, W - 140);
-      const larg = rnd(30, 110);
-      const y = rnd(45, yAsse - 60);
-      const alt = rnd(6, 34);
-      if (chance(0.6)) {
-        s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${larg.toFixed(1)}" height="${alt.toFixed(1)}" fill="${pick(grigi)}" opacity="${rnd(0.55, 0.95).toFixed(2)}"/>`;
+    const grigi = [NERO, '#4d453a', '#6e6455', '#8a8072'];
+    for (let b = 0; b < rndi(7, 12); b++) {
+      const x = rnd(45, W - 140), larg = rnd(30, 110);
+      const y = rnd(45, yAsse - 60), alt = rnd(6, 34);
+      if (p.tratteggio) {
+        s += `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(larg)}" height="${f1(alt)}" fill="none" stroke="${NERO}" stroke-width="1.4" stroke-dasharray="5 3"/>`;
+        if (chance(0.4)) s += freccia(x + larg, y + alt / 2, x + larg + rnd(15, 35), y + alt / 2 + rnd(-20, 20), 1.2);
+      } else if (chance(0.6)) {
+        s += `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(larg)}" height="${f1(alt)}" fill="${pick(grigi)}" opacity="${rnd(0.55, 0.95).toFixed(2)}"/>`;
       } else {
-        // trapezio: suono che cresce o cala d'intensità
         const alt2 = rnd(4, 30);
-        s += `<path d="M ${x} ${y} L ${x + larg} ${y + (alt - alt2) / 2} L ${x + larg} ${y + (alt + alt2) / 2} L ${x} ${y + alt} Z" fill="${pick(grigi)}" opacity="${rnd(0.55, 0.95).toFixed(2)}"/>`;
+        s += `<path d="M ${f1(x)} ${f1(y)} L ${f1(x + larg)} ${f1(y + (alt - alt2) / 2)} L ${f1(x + larg)} ${f1(y + (alt + alt2) / 2)} L ${f1(x)} ${f1(y + alt)} Z" fill="${pick(grigi)}" opacity="${rnd(0.55, 0.95).toFixed(2)}"/>`;
       }
+    }
+    return s;
+  }
+
+  // fila o costellazione di segni astratti (Zyklus, Cardew Octet, Wolff, Kagel)
+  function gSimboli(p) {
+    p = p || {};
+    let s = '';
+    if (p.sparse) {
+      for (let g = 0; g < rndi(8, 14); g++) s += glifo(rnd(60, W - 60), rnd(50, H - 50));
+      if (chance(0.5)) s += testo(rnd(60, W - 80), rnd(50, H - 50), 13, rndi(1, 12));
+      return s;
+    }
+    for (const yBase of [rnd(100, 150), rnd(250, 300)]) {
+      s += `<line x1="40" y1="${f1(yBase)}" x2="${W - 40}" y2="${f1(yBase)}" stroke="${NERO}" stroke-width="1" opacity="0.6"/>`;
+      let x = rnd(55, 80);
+      while (x < W - 60) {
+        s += glifo(x, yBase + rnd(-22, 22));
+        if (chance(0.25)) s += testo(x - 4, yBase + 36, 11, rndi(1, 16));
+        x += rnd(28, 52);
+      }
+    }
+    return s;
+  }
+
+  // carta millimetrata con caselle piene (Feldman)
+  function gGriglia(p) {
+    p = p || {};
+    let s = '';
+    const passo = 20;
+    for (let x = 40; x <= W - 40; x += passo) {
+      s += `<line x1="${x}" y1="40" x2="${x}" y2="${H - 40}" stroke="${NERO}" stroke-width="0.5" opacity="0.25"/>`;
+    }
+    for (let y = 40; y <= H - 40; y += passo) {
+      s += `<line x1="40" y1="${y}" x2="${W - 40}" y2="${y}" stroke="${NERO}" stroke-width="0.5" opacity="0.25"/>`;
+    }
+    const grigi = [NERO, '#4d453a', '#6e6455'];
+    const n = p.denso ? rndi(20, 32) : rndi(10, 18);
+    for (let c = 0; c < n; c++) {
+      const col = rndi(0, Math.floor((W - 80) / passo) - 2);
+      const rig = rndi(0, Math.floor((H - 80) / passo) - 1);
+      const wCel = passo * rndi(1, 3), hCel = passo;
+      s += `<rect x="${40 + col * passo}" y="${40 + rig * passo}" width="${wCel}" height="${hCel}" fill="${pick(grigi)}" opacity="${rnd(0.7, 1).toFixed(2)}"/>`;
+      if (chance(0.25)) s += testo(40 + col * passo + wCel + 4, 40 + rig * passo + 14, 12, rndi(1, 4));
+    }
+    return s;
+  }
+
+  // rettangoli neri sospesi nel vuoto (Earle Brown, December 1952)
+  function gRettangoliSparsi() {
+    let s = '';
+    for (let r = 0; r < rndi(14, 24); r++) {
+      const orizz = chance(0.6);
+      const lungo = rnd(15, 90), spesso = rnd(2, 9);
+      const x = rnd(60, W - 120), y = rnd(50, H - 60);
+      if (orizz) s += `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(lungo)}" height="${f1(spesso)}" fill="${NERO}"/>`;
+      else s += `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(spesso)}" height="${f1(lungo)}" fill="${NERO}"/>`;
+    }
+    return s;
+  }
+
+  // calligrafia espressiva che esplode (Bussotti, Guaccero, Chiari, Cage Concert)
+  function gCaos(p) {
+    p = p || {};
+    let s = '';
+    if (p.pent) {
+      for (let st = 0; st < rndi(2, 3); st++) s += pent(50, rnd(60, H - 100), rnd(300, W - 120), 9, 5, 0.55);
+    }
+    const nTratti = p.sparse ? rndi(4, 7) : rndi(8, 13);
+    for (let t = 0; t < nTratti; t++) {
+      let x = rnd(50, W - 200), y = rnd(50, H - 50);
+      let d = `M ${f1(x)} ${f1(y)}`;
+      for (let seg = 0; seg < rndi(2, 5); seg++) {
+        d += ` C ${f1(x + rnd(-80, 120))} ${f1(y + rnd(-90, 90))}, ${f1(x + rnd(-40, 160))} ${f1(y + rnd(-90, 90))}, ${f1(x += rnd(30, 110))} ${f1(y += rnd(-60, 60))}`;
+      }
+      const col = p.colore && chance(0.35) ? pick(VIVACI) : NERO;
+      s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${f1(rnd(1, 3.5))}" stroke-linecap="round"/>`;
+    }
+    for (let q = 0; q < rndi(6, 16); q++) {
+      s += `<circle cx="${f1(rnd(50, W - 50))}" cy="${f1(rnd(45, H - 45))}" r="${f1(rnd(1.5, 4))}" fill="${NERO}"/>`;
+    }
+    for (let a = 0; a < rndi(2, 4); a++) {
+      const x = rnd(60, W - 140);
+      const y = rnd(50, H - 50);
+      s += `<path d="M ${f1(x)} ${f1(y)} Q ${f1(x + rnd(20, 60))} ${f1(y - rnd(15, 45))} ${f1(x + rnd(60, 110))} ${f1(y + rnd(-10, 10))}" fill="none" stroke="${NERO}" stroke-width="1.3"/>`;
+    }
+    return s;
+  }
+
+  // linea proporzionale con sillabe e segni (Berio Sequenza III, Schnebel, Cage Water Music)
+  function gVoceProporzionale(p) {
+    p = p || {};
+    const parole = p.parole || ['a', 'o', 'ssst'];
+    let s = '';
+    const y = H / 2 + rnd(-30, 30);
+    s += `<line x1="40" y1="${f1(y)}" x2="${W - 40}" y2="${f1(y)}" stroke="${NERO}" stroke-width="1.5"/>`;
+    for (let t = 0; t < rndi(6, 10); t++) {
+      const x = rnd(60, W - 60);
+      s += `<line x1="${f1(x)}" y1="${f1(y - 8)}" x2="${f1(x)}" y2="${f1(y + 8)}" stroke="${NERO}" stroke-width="1.4"/>`;
+      if (chance(0.4)) s += testo(x - 8, y - 46, 12, `${rndi(1, 10)}&#8243;`);
+    }
+    for (let w = 0; w < rndi(6, 10); w++) {
+      const x = rnd(55, W - 110);
+      const dy = pick([rnd(-75, -20), rnd(20, 75)]);
+      s += testo(x, y + dy, rnd(12, 20), pick(parole), ' font-style="italic"');
+    }
+    for (let b = 0; b < rndi(2, 3); b++) {
+      const x = rnd(60, W - 150), larg = rnd(40, 90), ya = y + pick([-60, 55]);
+      s += `<path d="M ${f1(x)} ${f1(ya + 6)} L ${f1(x)} ${f1(ya - 6)} L ${f1(x + larg)} ${f1(ya - 6)} L ${f1(x + larg)} ${f1(ya + 6)}" fill="none" stroke="${NERO}" stroke-width="1.3"/>`;
+    }
+    for (let z = 0; z < rndi(2, 4); z++) {
+      const x = rnd(70, W - 120), ya = y + rnd(-40, 40);
+      let d = `M ${f1(x)} ${f1(ya)}`;
+      for (let k = 1; k <= 6; k++) d += ` L ${f1(x + k * 7)} ${f1(ya + (k % 2 === 0 ? 6 : -6))}`;
+      s += `<path d="${d}" fill="none" stroke="${NERO}" stroke-width="1.4"/>`;
+    }
+    return s;
+  }
+
+  // onomatopee da fumetto (Berberian Stripsody)
+  function gOnomatopee() {
+    const parole = ['BANG!', 'SPLASH', 'VROOOM', 'ZZZZZ', 'POP!', 'SDENG!', 'CRASH', 'GULP', 'FIIIU', 'TWEET'];
+    let s = '';
+    s += `<path d="${ondaOrizzontale(50, W - 50, H / 2 + rnd(-20, 20), 30, 10)}" fill="none" stroke="${NERO}" stroke-width="1" opacity="0.5"/>`;
+    const usate = [];
+    for (let w = 0; w < rndi(3, 5); w++) {
+      let parola = pick(parole);
+      while (usate.indexOf(parola) !== -1) parola = pick(parole);
+      usate.push(parola);
+      const x = 60 + w * rnd(110, 140), y = rnd(90, H - 70);
+      const dim = rnd(24, 42), rot = f1(rnd(-22, 22));
+      s += `<text x="${f1(x)}" y="${f1(y)}" font-family="'Arial Black', Arial, sans-serif" font-weight="bold" font-size="${f1(dim)}" fill="${NERO}" transform="rotate(${rot} ${f1(x)} ${f1(y)})">${parola}</text>`;
+      for (let m = 0; m < 3; m++) {
+        const mx = x - rnd(10, 30), my = y + rnd(-25, 8);
+        s += `<line x1="${f1(mx)}" y1="${f1(my)}" x2="${f1(mx - rnd(12, 22))}" y2="${f1(my + rnd(-4, 4))}" stroke="${NERO}" stroke-width="1.5"/>`;
+      }
+    }
+    for (let st = 0; st < rndi(2, 4); st++) {
+      const cx = rnd(70, W - 70), cy = rnd(50, H - 50), r = rnd(4, 8);
+      s += `<path d="M ${f1(cx)} ${f1(cy - r)} L ${f1(cx + r * 0.35)} ${f1(cy - r * 0.35)} L ${f1(cx + r)} ${f1(cy)} L ${f1(cx + r * 0.35)} ${f1(cy + r * 0.35)} L ${f1(cx)} ${f1(cy + r)} L ${f1(cx - r * 0.35)} ${f1(cy + r * 0.35)} L ${f1(cx - r)} ${f1(cy)} L ${f1(cx - r * 0.35)} ${f1(cy - r * 0.35)} Z" fill="${NERO}"/>`;
+    }
+    return s;
+  }
+
+  // partitura d'ascolto colorata: macchie, pettini e cunei (Ligeti Artikulation)
+  function gPartituraAscolto() {
+    let s = '';
+    const yAsse = H - 45;
+    s += `<line x1="40" y1="${yAsse}" x2="${W - 40}" y2="${yAsse}" stroke="${NERO}" stroke-width="1.2"/>`;
+    for (let t = 0; t <= 12; t++) {
+      const x = 40 + (W - 80) * (t / 12);
+      s += `<line x1="${f1(x)}" y1="${yAsse}" x2="${f1(x)}" y2="${yAsse + 6}" stroke="${NERO}" stroke-width="1"/>`;
+    }
+    for (let e = 0; e < rndi(10, 16); e++) {
+      const x = rnd(55, W - 80), y = rnd(50, yAsse - 40);
+      const col = pick(VIVACI);
+      const tipo = rndi(0, 3);
+      if (tipo === 0) {
+        s += `<ellipse cx="${f1(x)}" cy="${f1(y)}" rx="${f1(rnd(8, 26))}" ry="${f1(rnd(5, 14))}" fill="${col}" opacity="0.85" transform="rotate(${f1(rnd(-30, 30))} ${f1(x)} ${f1(y)})"/>`;
+      } else if (tipo === 1) {
+        for (let k = 0; k < rndi(4, 7); k++) {
+          s += `<line x1="${f1(x + k * 5)}" y1="${f1(y)}" x2="${f1(x + k * 5)}" y2="${f1(y + rnd(14, 30))}" stroke="${col}" stroke-width="2"/>`;
+        }
+      } else if (tipo === 2) {
+        s += `<path d="M ${f1(x)} ${f1(y)} L ${f1(x + rnd(20, 50))} ${f1(y - rnd(5, 14))} L ${f1(x + rnd(20, 50))} ${f1(y + rnd(5, 14))} Z" fill="${col}" opacity="0.85"/>`;
+      } else {
+        for (let k = 0; k < rndi(3, 8); k++) {
+          s += `<circle cx="${f1(x + rnd(-15, 15))}" cy="${f1(y + rnd(-12, 12))}" r="${f1(rnd(1.5, 3.5))}" fill="${col}"/>`;
+        }
+      }
+    }
+    return s;
+  }
+
+  // fasci di glissandi rettilinei (Xenakis Metastaseis)
+  function gFasciGlissando() {
+    let s = '';
+    for (let fbi = 0; fbi < rndi(3, 5); fbi++) {
+      const dir = chance(0.5) ? 1 : -1;
+      const x0 = dir === 1 ? rnd(50, 250) : rnd(W - 250, W - 50);
+      const y0 = rnd(60, H - 60);
+      const x1 = x0 + dir * rnd(150, 320);
+      const yA = rnd(45, H / 2 - 20), yB = rnd(H / 2 + 20, H - 45);
+      const n = rndi(8, 16);
+      for (let i = 0; i < n; i++) {
+        const y1 = yA + (yB - yA) * (i / (n - 1));
+        s += `<line x1="${f1(x0)}" y1="${f1(y0)}" x2="${f1(Math.max(30, Math.min(W - 30, x1)))}" y2="${f1(y1)}" stroke="${NERO}" stroke-width="1.1"/>`;
+      }
+    }
+    return s;
+  }
+
+  // sciame statistico di punti e trattini (Xenakis Pithoprakta, Cage Atlas)
+  function gSciameDiPunti(p) {
+    p = p || {};
+    let s = '';
+    if (p.pent) {
+      s += pent(40, rnd(70, 100), W - 80, 13, 5, 0.35);
+      s += pent(40, rnd(250, 280), W - 80, 13, 5, 0.35);
+    }
+    for (let d = 0; d < rndi(60, 120); d++) {
+      s += `<circle cx="${f1(rnd(45, W - 45))}" cy="${f1(rnd(45, H - 45))}" r="${f1(rnd(1, 3.2))}" fill="${NERO}"/>`;
+    }
+    for (let t = 0; t < rndi(10, 22); t++) {
+      const x = rnd(50, W - 80), y = rnd(50, H - 50), a = rnd(0, Math.PI);
+      const L = rnd(8, 26);
+      s += `<line x1="${f1(x)}" y1="${f1(y)}" x2="${f1(x + Math.cos(a) * L)}" y2="${f1(y + Math.sin(a) * L)}" stroke="${NERO}" stroke-width="1.2"/>`;
+    }
+    return s;
+  }
+
+  // punti e lunghe rette su fogli trasparenti (Cage Variations I, Fontana Mix)
+  function gPuntiLinee(p) {
+    p = p || {};
+    let s = '';
+    for (let l = 0; l < rndi(4, 8); l++) {
+      const lato = rndi(0, 1);
+      const x1 = lato ? rnd(0, W) : 0, y1 = lato ? 0 : rnd(0, H);
+      const x2 = lato ? rnd(0, W) : W, y2 = lato ? H : rnd(0, H);
+      s += `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${NERO}" stroke-width="${f1(rnd(0.8, 1.6))}"/>`;
+    }
+    for (let d = 0; d < rndi(15, 30); d++) {
+      s += `<circle cx="${f1(rnd(40, W - 40))}" cy="${f1(rnd(40, H - 40))}" r="${f1(rnd(1.5, 4.5))}" fill="${NERO}"/>`;
+    }
+    if (p.curva) {
+      for (let c = 0; c < rndi(1, 2); c++) {
+        s += `<path d="${ondaOrizzontale(rnd(40, 120), rnd(W - 140, W - 40), rnd(80, H - 80), rnd(30, 70), rndi(5, 8))}" fill="none" stroke="${NERO}" stroke-width="1.4"/>`;
+      }
+    }
+    return s;
+  }
+
+  // forme sospese collegate, "mobiles" (Haubenstock-Ramati, Schaeffer)
+  function gFormeMobili(p) {
+    p = p || {};
+    let s = '';
+    const centri = [];
+    for (let n = 0; n < rndi(6, 10); n++) {
+      const x = rnd(80, W - 80), y = rnd(60, H - 60);
+      centri.push([x, y]);
+      const col = p.colori ? pick(VIVACI) : NERO;
+      const tipo = rndi(0, 3);
+      if (tipo === 0) s += `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(rnd(12, 34))}" fill="none" stroke="${col}" stroke-width="${f1(rnd(1.5, 3))}"/>`;
+      else if (tipo === 1) s += `<path d="M ${f1(x)} ${f1(y - rnd(12, 26))} L ${f1(x + rnd(12, 26))} ${f1(y + rnd(10, 20))} L ${f1(x - rnd(12, 26))} ${f1(y + rnd(10, 20))} Z" fill="none" stroke="${col}" stroke-width="2"/>`;
+      else if (tipo === 2) s += `<rect x="${f1(x - 14)}" y="${f1(y - 10)}" width="${f1(rnd(20, 40))}" height="${f1(rnd(14, 28))}" fill="none" stroke="${col}" stroke-width="2" transform="rotate(${f1(rnd(-20, 20))} ${f1(x)} ${f1(y)})"/>`;
+      else s += `<path d="M ${f1(x - 18)} ${f1(y)} Q ${f1(x)} ${f1(y - rnd(18, 36))} ${f1(x + 18)} ${f1(y)}" fill="none" stroke="${col}" stroke-width="2"/>`;
+    }
+    for (let c = 0; c < rndi(4, 7); c++) {
+      const a = pick(centri), b = pick(centri);
+      if (a !== b) s += `<line x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}" stroke="${NERO}" stroke-width="0.8" opacity="0.6"/>`;
+    }
+    return s;
+  }
+
+  // pentagrammi curvi in ogni direzione (Maderna, Serenata per un satellite)
+  function gPentagrammiCurvi() {
+    let s = '';
+    for (let n = 0; n < rndi(5, 8); n++) {
+      const x = rnd(60, W - 220), y = rnd(60, H - 80);
+      const w = rnd(90, 190), curva = rnd(-35, 35), rot = f1(rnd(0, 360));
+      let g = `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${rot})">`;
+      for (let l = 0; l < 5; l++) {
+        g += `<path d="M 0 ${l * 7} Q ${f1(w / 2)} ${f1(l * 7 + curva)} ${f1(w)} ${l * 7}" fill="none" stroke="${NERO}" stroke-width="1"/>`;
+      }
+      for (let nt = 0; nt < rndi(3, 7); nt++) {
+        const t = rnd(0.1, 0.9);
+        const nx = w * t;
+        const ny = (1 - t) * (1 - t) * 0 + 2 * (1 - t) * t * curva + t * t * 0 + rnd(0, 28);
+        g += `<circle cx="${f1(nx)}" cy="${f1(ny)}" r="2.8" fill="${NERO}"/>`;
+      }
+      s += g + '</g>';
+    }
+    return s;
+  }
+
+  // una sola linea retta (La Monte Young)
+  function gLineaRetta() {
+    const y1 = rnd(120, H - 120);
+    return `<line x1="60" y1="${f1(y1)}" x2="${W - 60}" y2="${f1(y1 + rnd(-30, 30))}" stroke="${NERO}" stroke-width="2"/>`;
+  }
+
+  // pagina quasi vuota: tacet (Cage 4'33")
+  function gPaginaTacet() {
+    let s = '';
+    const romani = ['I', 'II', 'III'];
+    for (let m = 0; m < 3; m++) {
+      s += testo(W / 2 - 40, 110 + m * 80, 16, romani[m]);
+      s += testo(W / 2 - 10, 110 + m * 80, 16, 'TACET', ' font-style="italic"');
+    }
+    return s;
+  }
+
+  // reticoli di linee e cunei ascendenti (Russolo, notazione enarmonica)
+  function gLineeFuturiste() {
+    let s = '';
+    const y0 = 90;
+    for (let l = 0; l < 8; l++) {
+      s += `<line x1="40" y1="${y0 + l * 26}" x2="${W - 40}" y2="${y0 + l * 26}" stroke="${NERO}" stroke-width="1"/>`;
+    }
+    for (let c = 0; c < rndi(3, 5); c++) {
+      const x0 = rnd(60, W - 220), x1 = x0 + rnd(100, 200);
+      const yA = y0 + rnd(0, 7) * 26, yB = y0 + rnd(0, 7) * 26;
+      const sp = rnd(6, 16);
+      s += `<path d="M ${f1(x0)} ${f1(yA)} L ${f1(x1)} ${f1(yB - sp / 2)} L ${f1(x1)} ${f1(yB + sp / 2)} Z" fill="${NERO}"/>`;
+    }
+    for (let z = 0; z < rndi(1, 3); z++) {
+      const x = rnd(70, W - 140), y = y0 + rnd(0, 7) * 26;
+      let d = `M ${f1(x)} ${f1(y)}`;
+      for (let k = 1; k <= 8; k++) d += ` L ${f1(x + k * 8)} ${f1(y + (k % 2 === 0 ? 10 : -10))}`;
+      s += `<path d="${d}" fill="none" stroke="${NERO}" stroke-width="1.6"/>`;
+    }
+    return s;
+  }
+
+  // grandi masse nere lobate (Ligeti Volumina)
+  function gMasseNere() {
+    let s = '';
+    for (let m = 0; m < rndi(2, 4); m++) {
+      const cx = rnd(140, W - 140), cy = H / 2 + rnd(-60, 60);
+      s += `<path d="${blob(cx, cy, rnd(50, 95), rnd(0.4, 0.7))}" fill="${NERO}"/>`;
+      for (let b = 0; b < rndi(1, 3); b++) {
+        s += `<circle cx="${f1(cx + rnd(-30, 30))}" cy="${f1(cy + rnd(-18, 18))}" r="${f1(rnd(3, 9))}" fill="#fffefb"/>`;
+      }
+    }
+    if (chance(0.7)) s += testo(rnd(60, W - 120), rnd(50, 80), 13, `${rndi(10, 60)}&#8243;`);
+    return s;
+  }
+
+  // grappoli di curve aperte, contorni di pietre (Cage Ryoanji, Logothetis)
+  function gCurvePietre(p) {
+    p = p || {};
+    let s = '';
+    for (let c = 0; c < rndi(4, 7); c++) {
+      const cx = rnd(90, W - 90), cy = rnd(70, H - 70);
+      for (let a = 0; a < rndi(2, 4); a++) {
+        const r = rnd(15, 45);
+        const a0 = rnd(0, Math.PI * 2), span = rnd(2, 5);
+        const punti = [];
+        for (let t = 0; t <= 8; t++) {
+          const ang = a0 + span * (t / 8);
+          punti.push([cx + Math.cos(ang) * r * rnd(0.85, 1.15), cy + Math.sin(ang) * r * rnd(0.85, 1.15)]);
+        }
+        s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="${NERO}" stroke-width="${f1(rnd(1, 2))}"/>`;
+      }
+      if (p.simboli && chance(0.6)) s += glifo(cx + rnd(-20, 20), cy + rnd(-20, 20));
+    }
+    return s;
+  }
+
+  // tabella di piu e meno (Stockhausen Plus-Minus)
+  function gPiuMeno() {
+    let s = '';
+    const cols = rndi(6, 9), rows = rndi(4, 6);
+    const x0 = 60, y0 = 70;
+    const cw = (W - 120) / cols, ch = (H - 140) / rows;
+    for (let c = 0; c <= cols; c++) {
+      s += `<line x1="${f1(x0 + c * cw)}" y1="${y0}" x2="${f1(x0 + c * cw)}" y2="${f1(y0 + rows * ch)}" stroke="${NERO}" stroke-width="0.7" opacity="0.5"/>`;
+    }
+    for (let r = 0; r <= rows; r++) {
+      s += `<line x1="${x0}" y1="${f1(y0 + r * ch)}" x2="${f1(x0 + cols * cw)}" y2="${f1(y0 + r * ch)}" stroke="${NERO}" stroke-width="0.7" opacity="0.5"/>`;
+    }
+    const segni = ['+', '&#8722;', '&#9675;', '&#177;'];
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        if (chance(0.35)) continue;
+        const seg = chance(0.25) ? String(rndi(1, 9)) : pick(segni);
+        s += testo(x0 + c * cw + cw / 2 - 6, y0 + r * ch + ch / 2 + 6, 19, seg);
+      }
+    }
+    return s;
+  }
+
+  // riquadri con frammenti di pentagramma (Lutoslawski, Brown, Donatoni)
+  function gRiquadri() {
+    let s = '';
+    const slot = [[80, 60], [265, 60], [450, 60], [80, 225], [265, 225], [450, 225]];
+    for (let i = slot.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [slot[i], slot[j]] = [slot[j], slot[i]];
+    }
+    const usati = [];
+    const n = rndi(4, 6);
+    for (let b = 0; b < n; b++) {
+      const bx = slot[b][0] + rnd(-15, 15), by = slot[b][1] + rnd(-12, 12);
+      const bw = rnd(100, 140), bh = rnd(55, 80);
+      usati.push([bx + bw / 2, by + bh / 2]);
+      s += `<rect x="${f1(bx)}" y="${f1(by)}" width="${f1(bw)}" height="${f1(bh)}" fill="none" stroke="${NERO}" stroke-width="1.5"/>`;
+      s += pent(bx + 8, by + bh / 2 - 16, bw - 16, 8, 5);
+      for (let nt = 0; nt < rndi(3, 7); nt++) {
+        const nx = bx + 14 + rnd(0, bw - 28);
+        const ny = by + bh / 2 - 16 + rndi(0, 4) * 8 + pick([0, 4]);
+        s += `<ellipse cx="${f1(nx)}" cy="${f1(ny)}" rx="3.4" ry="2.6" fill="${NERO}"/>`;
+        s += `<line x1="${f1(nx + 3.2)}" y1="${f1(ny)}" x2="${f1(nx + 3.2)}" y2="${f1(ny - 14)}" stroke="${NERO}" stroke-width="1.2"/>`;
+      }
+      s += testo(bx + 4, by - 6, 12, rndi(1, 9));
+    }
+    for (let a = 0; a < rndi(1, 3); a++) {
+      const p1 = pick(usati), p2 = pick(usati);
+      if (p1 !== p2) s += freccia(p1[0], p1[1] + 30, p2[0], p2[1] - 30, 1.1);
+    }
+    return s;
+  }
+
+  // masse disegnate a mano fitte di tratti verticali (Xenakis, UPIC)
+  function gMasseUPIC() {
+    let s = '';
+    for (let m = 0; m < rndi(3, 5); m++) {
+      const x0 = rnd(50, W / 2), x1 = x0 + rnd(90, 220);
+      const yc = rnd(80, H - 80);
+      const ampMax = rnd(18, 55);
+      const fase = rnd(0, 6), freq = rnd(1, 3);
+      let d = '';
+      let alto = true;
+      for (let x = x0; x < Math.min(x1, W - 40); x += 2.2) {
+        const t = (x - x0) / (x1 - x0);
+        const amp = ampMax * Math.pow(Math.sin(Math.PI * t), 0.6) * rnd(0.75, 1);
+        const centro = yc + Math.sin(fase + t * freq * Math.PI * 2) * 18;
+        const y = alto ? centro - amp : centro + amp;
+        d += (d ? ' L ' : 'M ') + f1(x) + ' ' + f1(y);
+        alto = !alto;
+      }
+      s += `<path d="${d}" fill="none" stroke="${NERO}" stroke-width="0.9"/>`;
+    }
+    return s;
+  }
+
+  // diagramma di forme collegate (Braxton)
+  function gDiagramma() {
+    let s = '';
+    const centri = [];
+    const slot = [[110, 90], [320, 70], [520, 100], [130, 230], [330, 210], [520, 250], [230, 330], [430, 330]];
+    for (let i = slot.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [slot[i], slot[j]] = [slot[j], slot[i]];
+    }
+    const n = rndi(5, 8);
+    for (let k = 0; k < n; k++) {
+      const x = slot[k][0] + rnd(-15, 15), y = slot[k][1] + rnd(-12, 12);
+      centri.push([x, y]);
+      const tipo = rndi(0, 2);
+      if (tipo === 0) s += `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(rnd(16, 28))}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+      else if (tipo === 1) s += `<rect x="${f1(x - 24)}" y="${f1(y - 15)}" width="48" height="30" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+      else s += `<path d="M ${f1(x)} ${f1(y - 20)} L ${f1(x + 22)} ${f1(y + 15)} L ${f1(x - 22)} ${f1(y + 15)} Z" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+      s += testo(x - 5, y + 5, 13, pick(['A', 'B', 'K', 'N', String(rndi(1, 99))]));
+    }
+    for (let c = 0; c < rndi(4, 8); c++) {
+      const a = pick(centri), b = pick(centri);
+      if (a !== b) s += `<line x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}" stroke="${NERO}" stroke-width="1"/>`;
     }
     return s;
   }
 
   // ---------- GENERATORI DI SCARABOCCHI ----------
 
-  // Ghirigori: catene di riccioli come su un block-notes durante una telefonata
-  function scarabocchioGhirigori() {
+  function dGhirigori() {
     let s = '';
-    const nCatene = rndi(2, 4);
-    for (let c = 0; c < nCatene; c++) {
+    for (let c = 0; c < rndi(2, 4); c++) {
       let x = rnd(60, 200), y = rnd(70, H - 70);
-      let d = `M ${x.toFixed(1)} ${y.toFixed(1)}`;
-      const nRicci = rndi(5, 10);
-      for (let r = 0; r < nRicci; r++) {
+      let d = `M ${f1(x)} ${f1(y)}`;
+      for (let r = 0; r < rndi(5, 10); r++) {
         const passo = rnd(28, 55);
         const su = rnd(25, 55) * (chance(0.5) ? 1 : -1);
-        d += ` c ${(passo * 0.2).toFixed(1)} ${(-su).toFixed(1)}, ${(passo * 0.9).toFixed(1)} ${(-su).toFixed(1)}, ${(passo * 0.55).toFixed(1)} 0`
-           + ` c ${(-passo * 0.3).toFixed(1)} ${(su * 0.8).toFixed(1)}, ${(passo * 0.5).toFixed(1)} ${(su * 0.9).toFixed(1)}, ${passo.toFixed(1)} ${rnd(-14, 14).toFixed(1)}`;
+        d += ` c ${f1(passo * 0.2)} ${f1(-su)}, ${f1(passo * 0.9)} ${f1(-su)}, ${f1(passo * 0.55)} 0`
+           + ` c ${f1(-passo * 0.3)} ${f1(su * 0.8)}, ${f1(passo * 0.5)} ${f1(su * 0.9)}, ${f1(passo)} ${f1(rnd(-14, 14))}`;
         x += passo * 1.55;
         if (x > W - 80) break;
       }
-      s += `<path d="${d}" fill="none" stroke="#2b2620" stroke-width="${rnd(1.8, 3).toFixed(1)}" stroke-linecap="round"/>`;
+      s += `<path d="${d}" fill="none" stroke="${NERO}" stroke-width="${f1(rnd(1.8, 3))}" stroke-linecap="round"/>`;
     }
     return s;
   }
 
-  // Gomitolo rabbioso: zigzag fittissimo dentro una zona
-  function scarabocchioGomitolo() {
+  function dGomitolo() {
     let s = '';
-    const nGomitoli = rndi(1, 3);
-    for (let g = 0; g < nGomitoli; g++) {
+    for (let g = 0; g < rndi(1, 3); g++) {
       const cx = rnd(140, W - 140), cy = rnd(110, H - 110);
       const rx = rnd(55, 130), ry = rnd(40, 90);
       const punti = [];
-      const n = rndi(28, 55);
-      for (let i = 0; i < n; i++) {
-        punti.push([cx + rnd(-rx, rx), cy + rnd(-ry, ry)]);
-      }
-      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="#2b2620" stroke-width="${rnd(1.5, 2.6).toFixed(1)}" stroke-linecap="round"/>`;
+      for (let i = 0; i < rndi(28, 55); i++) punti.push([cx + rnd(-rx, rx), cy + rnd(-ry, ry)]);
+      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="${NERO}" stroke-width="${f1(rnd(1.5, 2.6))}" stroke-linecap="round"/>`;
     }
     return s;
   }
 
-  // Margine di quaderno: spirali, stelle e cuoricini sparsi
-  function scarabocchioSpiraleStelle() {
+  function dMargine() {
     let s = '';
     for (let sp = 0; sp < rndi(2, 4); sp++) {
       const cx = rnd(80, W - 80), cy = rnd(70, H - 70);
-      const giri = rnd(2.5, 4.5);
-      let d = `M ${cx} ${cy}`;
-      for (let t = 0; t <= giri * Math.PI * 2; t += 0.25) {
-        const r = 2.5 * t;
-        d += ` L ${(cx + Math.cos(t) * r).toFixed(1)} ${(cy + Math.sin(t) * r).toFixed(1)}`;
+      let d = `M ${f1(cx)} ${f1(cy)}`;
+      for (let t = 0; t <= rnd(2.5, 4.5) * Math.PI * 2; t += 0.25) {
+        d += ` L ${f1(cx + Math.cos(t) * 2.5 * t)} ${f1(cy + Math.sin(t) * 2.5 * t)}`;
       }
-      s += `<path d="${d}" fill="none" stroke="#2b2620" stroke-width="2" stroke-linecap="round"/>`;
+      s += `<path d="${d}" fill="none" stroke="${NERO}" stroke-width="2" stroke-linecap="round"/>`;
     }
     for (let st = 0; st < rndi(2, 4); st++) {
       const cx = rnd(60, W - 60), cy = rnd(50, H - 50);
@@ -434,100 +923,550 @@
       for (let p = 0; p < 10; p++) {
         const ang = -Math.PI / 2 + p * Math.PI / 5;
         const r = p % 2 === 0 ? rEst : rInt;
-        d += (p === 0 ? 'M ' : 'L ') + (cx + Math.cos(ang) * r).toFixed(1) + ' ' + (cy + Math.sin(ang) * r).toFixed(1) + ' ';
+        d += (p === 0 ? 'M ' : 'L ') + f1(cx + Math.cos(ang) * r) + ' ' + f1(cy + Math.sin(ang) * r) + ' ';
       }
-      s += `<path d="${d}Z" fill="none" stroke="#2b2620" stroke-width="2" stroke-linejoin="round"/>`;
+      s += `<path d="${d}Z" fill="none" stroke="${NERO}" stroke-width="2" stroke-linejoin="round"/>`;
     }
     for (let cu = 0; cu < rndi(1, 3); cu++) {
       const cx = rnd(60, W - 60), cy = rnd(60, H - 50);
       const dim = rnd(10, 20);
-      s += `<path d="M ${cx} ${cy + dim * 0.8} C ${cx - dim * 1.4} ${cy - dim * 0.4}, ${cx - dim * 0.5} ${cy - dim * 1.2}, ${cx} ${cy - dim * 0.3}`
-         + ` C ${cx + dim * 0.5} ${cy - dim * 1.2}, ${cx + dim * 1.4} ${cy - dim * 0.4}, ${cx} ${cy + dim * 0.8} Z"`
-         + ` fill="none" stroke="#2b2620" stroke-width="2" stroke-linejoin="round"/>`;
+      s += `<path d="M ${f1(cx)} ${f1(cy + dim * 0.8)} C ${f1(cx - dim * 1.4)} ${f1(cy - dim * 0.4)}, ${f1(cx - dim * 0.5)} ${f1(cy - dim * 1.2)}, ${f1(cx)} ${f1(cy - dim * 0.3)} C ${f1(cx + dim * 0.5)} ${f1(cy - dim * 1.2)}, ${f1(cx + dim * 1.4)} ${f1(cy - dim * 0.4)}, ${f1(cx)} ${f1(cy + dim * 0.8)} Z" fill="none" stroke="${NERO}" stroke-width="2" stroke-linejoin="round"/>`;
     }
     return s;
   }
 
-  // Onde distratte con nodi: il più infido, somiglia all'Aria di Cage
-  function scarabocchioOnde() {
+  function dOnde() {
     let s = '';
     const nOnde = rndi(4, 7);
     for (let o = 0; o < nOnde; o++) {
       const y = 40 + (H - 80) * (o / nOnde) + rnd(-15, 15);
-      s += `<path d="${ondaOrizzontale(rnd(40, 90), rnd(W - 120, W - 40), y, rnd(6, 22), rndi(8, 16))}" fill="none" stroke="#2b2620" stroke-width="${rnd(1.5, 3).toFixed(1)}" stroke-linecap="round"/>`;
+      s += `<path d="${ondaOrizzontale(rnd(40, 90), rnd(W - 120, W - 40), y, rnd(6, 22), rndi(8, 16))}" fill="none" stroke="${NERO}" stroke-width="${f1(rnd(1.5, 3))}" stroke-linecap="round"/>`;
     }
-    // nodi: piccoli grovigli dove la penna ha insistito
     for (let n = 0; n < rndi(2, 5); n++) {
       const cx = rnd(80, W - 80), cy = rnd(60, H - 60);
       const punti = [];
       for (let i = 0; i < 12; i++) punti.push([cx + rnd(-14, 14), cy + rnd(-12, 12)]);
-      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="#2b2620" stroke-width="1.8"/>`;
+      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
     }
     return s;
   }
 
-  // Macchie chiuse con tratteggio di riempimento
-  function scarabocchioMacchie() {
+  function dMacchie() {
     let s = '';
-    const nMacchie = rndi(2, 4);
-    for (let m = 0; m < nMacchie; m++) {
+    for (let m = 0; m < rndi(2, 4); m++) {
       const cx = rnd(120, W - 120), cy = rnd(90, H - 90);
-      const punti = [];
-      const n = rndi(7, 11);
       const rMed = rnd(35, 80);
-      for (let i = 0; i <= n; i++) {
-        const ang = (i / n) * Math.PI * 2;
-        const r = rMed * rnd(0.6, 1.3);
-        punti.push([cx + Math.cos(ang) * r, cy + Math.sin(ang) * r * 0.75]);
-      }
-      punti.push(punti[0]);
-      s += `<path d="${tracciaMorbida(punti)} Z" fill="none" stroke="#2b2620" stroke-width="2.2"/>`;
+      s += `<path d="${blob(cx, cy, rMed)}" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
       if (chance(0.6)) {
-        // tratteggio interno
         for (let t = -rMed; t < rMed; t += rnd(6, 10)) {
-          s += `<line x1="${(cx + t - 12).toFixed(1)}" y1="${(cy + rMed * 0.55).toFixed(1)}" x2="${(cx + t + 12).toFixed(1)}" y2="${(cy - rMed * 0.55).toFixed(1)}" stroke="#2b2620" stroke-width="1" opacity="0.7"/>`;
+          s += `<line x1="${f1(cx + t - 12)}" y1="${f1(cy + rMed * 0.55)}" x2="${f1(cx + t + 12)}" y2="${f1(cy - rMed * 0.55)}" stroke="${NERO}" stroke-width="1" opacity="0.7"/>`;
         }
       }
     }
     return s;
   }
 
-  // ---------- CATALOGO ----------
+  function dSchemino() {
+    let s = '';
+    const centri = [];
+    const slot = [[120, 90], [330, 70], [510, 110], [140, 240], [350, 220], [510, 280], [250, 330]];
+    for (let i = slot.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [slot[i], slot[j]] = [slot[j], slot[i]];
+    }
+    const n = rndi(4, 7);
+    for (let k = 0; k < n; k++) {
+      const x = slot[k][0] + rnd(-15, 15), y = slot[k][1] + rnd(-12, 12);
+      centri.push([x, y]);
+      if (chance(0.5)) s += `<rect x="${f1(x - 34)}" y="${f1(y - 18)}" width="68" height="36" rx="4" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+      else s += `<ellipse cx="${f1(x)}" cy="${f1(y)}" rx="36" ry="19" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+      // finto testo dentro la casella
+      for (let r = 0; r < rndi(1, 2); r++) {
+        const ty = y - 4 + r * 9;
+        s += `<path d="${ondaOrizzontale(x - 24, x + rnd(4, 24), ty, 1.5, 6)}" fill="none" stroke="${NERO}" stroke-width="1"/>`;
+      }
+    }
+    for (let c = 0; c < rndi(3, 6); c++) {
+      const a = pick(centri), b = pick(centri);
+      if (a !== b) s += freccia(a[0], a[1] + 20, b[0], b[1] - 22, 1.5);
+    }
+    if (chance(0.6)) s += testo(rnd(60, W - 80), rnd(50, H - 60), 26, '?');
+    if (chance(0.35)) {
+      const c = pick(centri);
+      s += `<path d="M ${f1(c[0] - 30)} ${f1(c[1] - 18)} L ${f1(c[0] + 30)} ${f1(c[1] + 18)} M ${f1(c[0] - 30)} ${f1(c[1] + 18)} L ${f1(c[0] + 30)} ${f1(c[1] - 18)}" stroke="${NERO}" stroke-width="1.8"/>`;
+    }
+    return s;
+  }
+
+  function dFaccina() {
+    let s = '';
+    const nFacce = rndi(1, 2);
+    for (let fi = 0; fi < nFacce; fi++) {
+      const cx = nFacce === 1 ? W / 2 + rnd(-60, 60) : 180 + fi * 280 + rnd(-30, 30);
+      const cy = H / 2 + rnd(-40, 40);
+      const r = rnd(55, 85);
+      s += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+      const occhiali = chance(0.4);
+      if (occhiali) {
+        s += `<circle cx="${f1(cx - r * 0.35)}" cy="${f1(cy - r * 0.15)}" r="${f1(r * 0.24)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+        s += `<circle cx="${f1(cx + r * 0.35)}" cy="${f1(cy - r * 0.15)}" r="${f1(r * 0.24)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+        s += `<line x1="${f1(cx - r * 0.11)}" y1="${f1(cy - r * 0.15)}" x2="${f1(cx + r * 0.11)}" y2="${f1(cy - r * 0.15)}" stroke="${NERO}" stroke-width="2"/>`;
+      } else {
+        s += `<circle cx="${f1(cx - r * 0.33)}" cy="${f1(cy - r * 0.18)}" r="${f1(r * 0.07)}" fill="${NERO}"/>`;
+        s += `<circle cx="${f1(cx + r * 0.33)}" cy="${f1(cy - r * 0.18)}" r="${f1(r * 0.07)}" fill="${NERO}"/>`;
+      }
+      s += `<path d="M ${f1(cx - r * 0.06)} ${f1(cy - r * 0.1)} L ${f1(cx + r * 0.06)} ${f1(cy + r * 0.18)} L ${f1(cx - r * 0.04)} ${f1(cy + r * 0.2)}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+      const felice = chance(0.7);
+      s += `<path d="M ${f1(cx - r * 0.4)} ${f1(cy + r * (felice ? 0.4 : 0.55))} Q ${f1(cx)} ${f1(cy + r * (felice ? 0.68 : 0.3))} ${f1(cx + r * 0.4)} ${f1(cy + r * (felice ? 0.4 : 0.55))}" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+      // capelli a zigzag
+      let d = '';
+      for (let a = -2.7; a <= -0.44; a += 0.18) {
+        const rr = r * (d === '' || chance(0.5) ? 1.02 : 1.28);
+        d += (d === '' ? 'M ' : 'L ') + f1(cx + Math.cos(a) * rr) + ' ' + f1(cy + Math.sin(a) * rr) + ' ';
+      }
+      s += `<path d="${d}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+      if (chance(0.35)) {
+        s += `<path d="M ${f1(cx - r * 0.35)} ${f1(cy + r * 0.32)} Q ${f1(cx - r * 0.15)} ${f1(cy + r * 0.18)} ${f1(cx - 2)} ${f1(cy + r * 0.32)} M ${f1(cx + 2)} ${f1(cy + r * 0.32)} Q ${f1(cx + r * 0.15)} ${f1(cy + r * 0.18)} ${f1(cx + r * 0.35)} ${f1(cy + r * 0.32)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+      }
+      s += `<path d="M ${f1(cx - r * 1.02)} ${f1(cy)} Q ${f1(cx - r * 1.22)} ${f1(cy + 8)} ${f1(cx - r * 1.02)} ${f1(cy + 18)} M ${f1(cx + r * 1.02)} ${f1(cy)} Q ${f1(cx + r * 1.22)} ${f1(cy + 8)} ${f1(cx + r * 1.02)} ${f1(cy + 18)}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+    }
+    return s;
+  }
+
+  function dOmini() {
+    let s = '';
+    const n = rndi(2, 4);
+    if (chance(0.6)) s += `<line x1="40" y1="${H - 70}" x2="${W - 40}" y2="${H - 70}" stroke="${NERO}" stroke-width="1.5"/>`;
+    for (let o = 0; o < n; o++) {
+      const x = 100 + o * ((W - 200) / Math.max(1, n - 1)) + rnd(-25, 25);
+      const alt = rnd(90, 140);
+      const yPiedi = H - 70;
+      const yTesta = yPiedi - alt;
+      const rT = alt * 0.16;
+      s += `<circle cx="${f1(x)}" cy="${f1(yTesta + rT)}" r="${f1(rT)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+      const ySpalle = yTesta + rT * 2 + 4, yBacino = yPiedi - alt * 0.35;
+      s += `<line x1="${f1(x)}" y1="${f1(ySpalle)}" x2="${f1(x)}" y2="${f1(yBacino)}" stroke="${NERO}" stroke-width="2"/>`;
+      for (const lato of [-1, 1]) {
+        s += `<line x1="${f1(x)}" y1="${f1(ySpalle + 6)}" x2="${f1(x + lato * rnd(18, 32))}" y2="${f1(ySpalle + rnd(-22, 26))}" stroke="${NERO}" stroke-width="2"/>`;
+        s += `<line x1="${f1(x)}" y1="${f1(yBacino)}" x2="${f1(x + lato * rnd(12, 26))}" y2="${f1(yPiedi)}" stroke="${NERO}" stroke-width="2"/>`;
+      }
+    }
+    if (chance(0.5)) s += `<circle cx="${f1(rnd(120, W - 120))}" cy="${f1(H - 70 - rnd(10, 90))}" r="${f1(rnd(8, 14))}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+    return s;
+  }
+
+  function dCasetta() {
+    let s = '';
+    const hx = rnd(150, 320), hy = rnd(160, 220), lato = rnd(80, 120);
+    s += `<rect x="${f1(hx)}" y="${f1(hy)}" width="${f1(lato)}" height="${f1(lato * 0.8)}" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+    s += `<path d="M ${f1(hx - 12)} ${f1(hy)} L ${f1(hx + lato / 2)} ${f1(hy - lato * 0.55)} L ${f1(hx + lato + 12)} ${f1(hy)} Z" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+    s += `<rect x="${f1(hx + lato * 0.4)}" y="${f1(hy + lato * 0.35)}" width="${f1(lato * 0.2)}" height="${f1(lato * 0.45)}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+    const wx = hx + lato * 0.12, wy = hy + lato * 0.15, wl = lato * 0.2;
+    s += `<rect x="${f1(wx)}" y="${f1(wy)}" width="${f1(wl)}" height="${f1(wl)}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+    s += `<line x1="${f1(wx + wl / 2)}" y1="${f1(wy)}" x2="${f1(wx + wl / 2)}" y2="${f1(wy + wl)}" stroke="${NERO}" stroke-width="1.2"/>`;
+    s += `<line x1="${f1(wx)}" y1="${f1(wy + wl / 2)}" x2="${f1(wx + wl)}" y2="${f1(wy + wl / 2)}" stroke="${NERO}" stroke-width="1.2"/>`;
+    // sole con i raggi
+    const sx = W - rnd(90, 140), sy = rnd(60, 100), sr = rnd(22, 32);
+    s += `<circle cx="${f1(sx)}" cy="${f1(sy)}" r="${f1(sr)}" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+    for (let r = 0; r < 10; r++) {
+      const a = (r / 10) * Math.PI * 2;
+      s += `<line x1="${f1(sx + Math.cos(a) * (sr + 5))}" y1="${f1(sy + Math.sin(a) * (sr + 5))}" x2="${f1(sx + Math.cos(a) * (sr + 16))}" y2="${f1(sy + Math.sin(a) * (sr + 16))}" stroke="${NERO}" stroke-width="2"/>`;
+    }
+    // fiore
+    const fx = rnd(80, 130), fy = H - 60;
+    s += `<line x1="${f1(fx)}" y1="${f1(fy)}" x2="${f1(fx)}" y2="${f1(fy - 45)}" stroke="${NERO}" stroke-width="2"/>`;
+    for (let p = 0; p < 6; p++) {
+      const a = (p / 6) * Math.PI * 2;
+      const px = fx + Math.cos(a) * 12, py = fy - 45 + Math.sin(a) * 12;
+      s += `<ellipse cx="${f1(px)}" cy="${f1(py)}" rx="8" ry="5" fill="none" stroke="${NERO}" stroke-width="1.6" transform="rotate(${f1(a * 180 / Math.PI)} ${f1(px)} ${f1(py)})"/>`;
+    }
+    s += `<circle cx="${f1(fx)}" cy="${f1(fy - 45)}" r="4" fill="${NERO}"/>`;
+    // uccellini a V
+    for (let u = 0; u < rndi(2, 4); u++) {
+      const ux = rnd(80, W - 120), uy = rnd(50, 130);
+      s += `<path d="M ${f1(ux)} ${f1(uy)} Q ${f1(ux + 8)} ${f1(uy - 8)} ${f1(ux + 16)} ${f1(uy)} M ${f1(ux + 16)} ${f1(uy)} Q ${f1(ux + 24)} ${f1(uy - 8)} ${f1(ux + 32)} ${f1(uy)}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+    }
+    return s;
+  }
+
+  function dCubi() {
+    let s = '';
+    for (let c = 0; c < rndi(3, 5); c++) {
+      const x = rnd(80, W - 160), y = rnd(90, H - 100);
+      const lato = rnd(35, 65), o = lato * 0.45;
+      s += `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(lato)}" height="${f1(lato)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+      s += `<path d="M ${f1(x)} ${f1(y)} L ${f1(x + o)} ${f1(y - o)} L ${f1(x + o + lato)} ${f1(y - o)} L ${f1(x + lato)} ${f1(y)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+      s += `<path d="M ${f1(x + o + lato)} ${f1(y - o)} L ${f1(x + o + lato)} ${f1(y - o + lato)} L ${f1(x + lato)} ${f1(y + lato)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+      if (chance(0.5)) {
+        for (let h = 8; h < lato; h += 9) {
+          s += `<line x1="${f1(x + lato + 2)}" y1="${f1(y + h)}" x2="${f1(x + lato + o - 2)}" y2="${f1(y + h - o)}" stroke="${NERO}" stroke-width="1"/>`;
+        }
+      }
+    }
+    return s;
+  }
+
+  function dTris() {
+    let s = '';
+    const gx = rnd(120, 300), gy = rnd(90, 160), cell = rnd(38, 55);
+    for (let i = 1; i <= 2; i++) {
+      s += `<line x1="${f1(gx + i * cell)}" y1="${f1(gy - 8)}" x2="${f1(gx + i * cell)}" y2="${f1(gy + 3 * cell + 8)}" stroke="${NERO}" stroke-width="2.4"/>`;
+      s += `<line x1="${f1(gx - 8)}" y1="${f1(gy + i * cell)}" x2="${f1(gx + 3 * cell + 8)}" y2="${f1(gy + i * cell)}" stroke="${NERO}" stroke-width="2.4"/>`;
+    }
+    let mosse = 0;
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        if (chance(0.4)) continue;
+        mosse++;
+        const cx = gx + c * cell + cell / 2, cy = gy + r * cell + cell / 2;
+        if ((mosse % 2) === 1) {
+          const d = cell * 0.26;
+          s += `<path d="M ${f1(cx - d)} ${f1(cy - d)} L ${f1(cx + d)} ${f1(cy + d)} M ${f1(cx - d)} ${f1(cy + d)} L ${f1(cx + d)} ${f1(cy - d)}" stroke="${NERO}" stroke-width="2.4"/>`;
+        } else {
+          s += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(cell * 0.28)}" fill="none" stroke="${NERO}" stroke-width="2.4"/>`;
+        }
+      }
+    }
+    if (chance(0.5)) {
+      s += `<line x1="${f1(gx - 12)}" y1="${f1(gy - 12)}" x2="${f1(gx + 3 * cell + 12)}" y2="${f1(gy + 3 * cell + 12)}" stroke="${NERO}" stroke-width="2.6"/>`;
+    }
+    if (chance(0.6)) {
+      const gx2 = W - rnd(120, 170), gy2 = rnd(230, 280), c2 = 24;
+      for (let i = 1; i <= 2; i++) {
+        s += `<line x1="${f1(gx2 + i * c2)}" y1="${f1(gy2)}" x2="${f1(gx2 + i * c2)}" y2="${f1(gy2 + 3 * c2)}" stroke="${NERO}" stroke-width="1.6"/>`;
+        s += `<line x1="${f1(gx2)}" y1="${f1(gy2 + i * c2)}" x2="${f1(gx2 + 3 * c2)}" y2="${f1(gy2 + i * c2)}" stroke="${NERO}" stroke-width="1.6"/>`;
+      }
+    }
+    return s;
+  }
+
+  function dScrittura() {
+    let s = '';
+    const righe = rndi(5, 8);
+    for (let r = 0; r < righe; r++) {
+      const y = 60 + (H - 110) * (r / (righe - 1)) + rnd(-6, 6);
+      let x = rnd(50, 80);
+      while (x < W - 110) {
+        const nLettere = rndi(3, 8);
+        let d = `M ${f1(x)} ${f1(y)}`;
+        for (let l = 0; l < nLettere; l++) {
+          const h = chance(0.2) ? rnd(14, 20) : rnd(5, 11);
+          const dx = rnd(5, 9);
+          d += ` c 1.5 ${f1(-h)}, ${f1(dx - 1.5)} ${f1(-h)}, ${f1(dx)} 0`;
+          x += dx;
+        }
+        if (chance(0.15)) {
+          d += ` c 1 ${f1(rnd(8, 14))}, -4 ${f1(rnd(10, 16))}, -6 4`;
+        }
+        s += `<path d="${d}" fill="none" stroke="${NERO}" stroke-width="1.3"/>`;
+        x += rnd(11, 20);
+      }
+    }
+    if (chance(0.4)) {
+      const y = rnd(70, H - 70);
+      s += `<line x1="${f1(rnd(60, 120))}" y1="${f1(y + 8)}" x2="${f1(rnd(220, 380))}" y2="${f1(y + 8)}" stroke="${NERO}" stroke-width="1.6"/>`;
+    }
+    return s;
+  }
+
+  function dOcchio() {
+    let s = '';
+    const cx = W / 2 + rnd(-80, 80), cy = H / 2 + rnd(-40, 20);
+    const larg = rnd(90, 140), alt = larg * 0.45;
+    s += `<path d="M ${f1(cx - larg / 2)} ${f1(cy)} Q ${f1(cx)} ${f1(cy - alt)} ${f1(cx + larg / 2)} ${f1(cy)} Q ${f1(cx)} ${f1(cy + alt)} ${f1(cx - larg / 2)} ${f1(cy)} Z" fill="none" stroke="${NERO}" stroke-width="2.4"/>`;
+    s += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(alt * 0.52)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+    s += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(alt * 0.24)}" fill="${NERO}"/>`;
+    s += `<circle cx="${f1(cx - alt * 0.12)}" cy="${f1(cy - alt * 0.12)}" r="${f1(alt * 0.08)}" fill="#fffefb"/>`;
+    for (let c = 0; c < 7; c++) {
+      const t = (c + 1) / 8;
+      const lx = cx - larg / 2 + larg * t;
+      const ly = cy - alt * Math.sin(Math.PI * t) * 0.95;
+      s += `<line x1="${f1(lx)}" y1="${f1(ly)}" x2="${f1(lx + rnd(-4, 6))}" y2="${f1(ly - rnd(10, 20))}" stroke="${NERO}" stroke-width="1.8"/>`;
+    }
+    s += `<path d="M ${f1(cx - larg / 2 - 5)} ${f1(cy - alt - 16)} Q ${f1(cx)} ${f1(cy - alt - 34)} ${f1(cx + larg / 2 + 5)} ${f1(cy - alt - 12)}" fill="none" stroke="${NERO}" stroke-width="3.2"/>`;
+    if (chance(0.45)) {
+      const ly = cy + alt + rnd(45, 70);
+      s += `<path d="M ${f1(cx - 55)} ${f1(ly)} Q ${f1(cx - 20)} ${f1(ly - 18)} ${f1(cx)} ${f1(ly)} Q ${f1(cx + 20)} ${f1(ly - 18)} ${f1(cx + 55)} ${f1(ly)} Q ${f1(cx)} ${f1(ly + 22)} ${f1(cx - 55)} ${f1(ly)} Z" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+      s += `<line x1="${f1(cx - 50)}" y1="${f1(ly + 1)}" x2="${f1(cx + 50)}" y2="${f1(ly + 1)}" stroke="${NERO}" stroke-width="1.4"/>`;
+    }
+    return s;
+  }
+
+  function dRagnatela(p) {
+    p = p || {};
+    let s = '';
+    const cx = W / 2 + rnd(-60, 60), cy = H / 2 + rnd(-20, 20);
+    if (p.mandala) {
+      for (const anello of [28, 52, 78, 104]) {
+        const nP = rndi(8, 14);
+        for (let q = 0; q < nP; q++) {
+          const a = (q / nP) * Math.PI * 2;
+          const px = cx + Math.cos(a) * anello, py = cy + Math.sin(a) * anello;
+          s += `<ellipse cx="${f1(px)}" cy="${f1(py)}" rx="12" ry="6" fill="none" stroke="${NERO}" stroke-width="1.5" transform="rotate(${f1(a * 180 / Math.PI)} ${f1(px)} ${f1(py)})"/>`;
+        }
+      }
+      s += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="8" fill="${NERO}"/>`;
+      return s;
+    }
+    const nR = rndi(8, 12);
+    const raggi = [];
+    for (let r = 0; r < nR; r++) {
+      const a = (r / nR) * Math.PI * 2 + rnd(-0.1, 0.1);
+      const lung = rnd(80, 150);
+      raggi.push([a, lung]);
+      s += `<line x1="${f1(cx)}" y1="${f1(cy)}" x2="${f1(cx + Math.cos(a) * lung)}" y2="${f1(cy + Math.sin(a) * lung)}" stroke="${NERO}" stroke-width="1.4"/>`;
+    }
+    for (const fdist of [0.3, 0.55, 0.8]) {
+      for (let r = 0; r < nR; r++) {
+        const [a1, l1] = raggi[r], [a2, l2] = raggi[(r + 1) % nR];
+        const p1 = [cx + Math.cos(a1) * l1 * fdist, cy + Math.sin(a1) * l1 * fdist];
+        const p2 = [cx + Math.cos(a2) * l2 * fdist, cy + Math.sin(a2) * l2 * fdist];
+        const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2;
+        const ctrl = [cx + (mx - cx) * 0.82, cy + (my - cy) * 0.82];
+        s += `<path d="M ${f1(p1[0])} ${f1(p1[1])} Q ${f1(ctrl[0])} ${f1(ctrl[1])} ${f1(p2[0])} ${f1(p2[1])}" fill="none" stroke="${NERO}" stroke-width="1.1"/>`;
+      }
+    }
+    return s;
+  }
+
+  function dLabirinto() {
+    let s = '';
+    let l = W / 2 - rnd(130, 190), t = H / 2 - rnd(90, 130);
+    let r = W / 2 + rnd(130, 190), b = H / 2 + rnd(90, 130);
+    const passo = rnd(15, 22);
+    let d = `M ${f1(l)} ${f1(t)}`;
+    while (r - l > passo * 2 && b - t > passo * 2) {
+      d += ` L ${f1(r)} ${f1(t)} L ${f1(r)} ${f1(b)} L ${f1(l + passo)} ${f1(b)} L ${f1(l + passo)} ${f1(t + passo)}`;
+      l += passo; t += passo; r -= passo; b -= passo;
+    }
+    s += `<path d="${d}" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+    return s;
+  }
+
+  function dFreccette() {
+    let s = '';
+    for (let a = 0; a < rndi(5, 9); a++) {
+      const x = rnd(70, W - 70), y = rnd(60, H - 60);
+      const ang = rnd(0, Math.PI * 2), lung = rnd(40, 90);
+      s += freccia(x, y, x + Math.cos(ang) * lung, y + Math.sin(ang) * lung, 2);
+    }
+    for (let ast = 0; ast < rndi(2, 4); ast++) {
+      const x = rnd(60, W - 60), y = rnd(50, H - 50), r = rnd(8, 14);
+      for (let k = 0; k < 3; k++) {
+        const a = k * Math.PI / 3;
+        s += `<line x1="${f1(x - Math.cos(a) * r)}" y1="${f1(y - Math.sin(a) * r)}" x2="${f1(x + Math.cos(a) * r)}" y2="${f1(y + Math.sin(a) * r)}" stroke="${NERO}" stroke-width="2"/>`;
+      }
+    }
+    for (let e = 0; e < rndi(1, 3); e++) {
+      const x = rnd(70, W - 70), y = rnd(60, H - 80);
+      s += `<line x1="${f1(x)}" y1="${f1(y)}" x2="${f1(x)}" y2="${f1(y + 22)}" stroke="${NERO}" stroke-width="3"/>`;
+      s += `<circle cx="${f1(x)}" cy="${f1(y + 32)}" r="2.6" fill="${NERO}"/>`;
+    }
+    for (let sw = 0; sw < rndi(1, 3); sw++) {
+      const x = rnd(60, W - 200), y = rnd(70, H - 60);
+      s += `<path d="M ${f1(x)} ${f1(y)} Q ${f1(x + 60)} ${f1(y + rnd(-14, 14))} ${f1(x + rnd(100, 160))} ${f1(y)} Q ${f1(x + rnd(100, 160))} ${f1(y + 12)} ${f1(x + rnd(60, 100))} ${f1(y + 10)}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+    }
+    return s;
+  }
+
+  function dRazzo(p) {
+    p = p || {};
+    let s = '';
+    if (p.barca) {
+      const cx = W / 2 + rnd(-60, 60), cy = H / 2 + rnd(0, 40);
+      s += `<path d="M ${f1(cx - 80)} ${f1(cy)} L ${f1(cx + 80)} ${f1(cy)} L ${f1(cx + 50)} ${f1(cy + 38)} L ${f1(cx - 50)} ${f1(cy + 38)} Z" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+      s += `<line x1="${f1(cx)}" y1="${f1(cy)}" x2="${f1(cx)}" y2="${f1(cy - 85)}" stroke="${NERO}" stroke-width="2.2"/>`;
+      s += `<path d="M ${f1(cx)} ${f1(cy - 85)} L ${f1(cx + 65)} ${f1(cy - 12)} L ${f1(cx)} ${f1(cy - 12)} Z" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+      for (let o = 0; o < 3; o++) {
+        const y = cy + 55 + o * 14;
+        s += `<path d="${ondaOrizzontale(cx - 140 + o * 20, cx + 140 - o * 20, y, 5, 8)}" fill="none" stroke="${NERO}" stroke-width="1.8"/>`;
+      }
+      for (let pe = 0; pe < rndi(2, 4); pe++) {
+        const px = rnd(80, W - 100), py = rnd(H - 90, H - 50);
+        s += `<path d="M ${f1(px)} ${f1(py)} Q ${f1(px + 10)} ${f1(py - 8)} ${f1(px + 20)} ${f1(py)} Q ${f1(px + 10)} ${f1(py + 8)} ${f1(px)} ${f1(py)} Z" fill="none" stroke="${NERO}" stroke-width="1.6"/><circle cx="${f1(px + 6)}" cy="${f1(py - 1)}" r="1.2" fill="${NERO}"/>`;
+      }
+      return s;
+    }
+    const cx = W / 2 + rnd(-70, 70), cy = H / 2 + rnd(-20, 20);
+    s += `<path d="M ${f1(cx - 22)} ${f1(cy + 60)} L ${f1(cx - 22)} ${f1(cy - 30)} Q ${f1(cx)} ${f1(cy - 95)} ${f1(cx + 22)} ${f1(cy - 30)} L ${f1(cx + 22)} ${f1(cy + 60)} Z" fill="none" stroke="${NERO}" stroke-width="2.4"/>`;
+    s += `<circle cx="${f1(cx)}" cy="${f1(cy - 15)}" r="12" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+    s += `<path d="M ${f1(cx - 22)} ${f1(cy + 20)} L ${f1(cx - 48)} ${f1(cy + 70)} L ${f1(cx - 22)} ${f1(cy + 60)} Z" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+    s += `<path d="M ${f1(cx + 22)} ${f1(cy + 20)} L ${f1(cx + 48)} ${f1(cy + 70)} L ${f1(cx + 22)} ${f1(cy + 60)} Z" fill="none" stroke="${NERO}" stroke-width="2.2"/>`;
+    let fiamma = `M ${f1(cx - 14)} ${f1(cy + 62)}`;
+    for (let k = 0; k < 5; k++) fiamma += ` L ${f1(cx - 14 + (k + 0.5) * 5.6)} ${f1(cy + 62 + (k % 2 === 0 ? rnd(18, 34) : 6))}`;
+    fiamma += ` L ${f1(cx + 14)} ${f1(cy + 62)}`;
+    s += `<path d="${fiamma}" fill="none" stroke="${NERO}" stroke-width="2"/>`;
+    for (let st = 0; st < rndi(4, 7); st++) {
+      const x = rnd(60, W - 60), y = rnd(50, H - 50), r = rnd(5, 10);
+      if (Math.abs(x - cx) < 90 && Math.abs(y - cy) < 110) continue;
+      s += `<path d="M ${f1(x - r)} ${f1(y)} L ${f1(x + r)} ${f1(y)} M ${f1(x)} ${f1(y - r)} L ${f1(x)} ${f1(y + r)}" stroke="${NERO}" stroke-width="1.8"/>`;
+    }
+    return s;
+  }
+
+  // ---------- CATALOGO: 50 SPARTITI ----------
+  // c = compositore, o = opera (null se generica), a = anno, d = descrizione, n = curiosità
 
   const SPARTITI = [
-    {
-      genera: spartitoPenderecki,
-      fonte: 'Krzysztof Penderecki, Trenodia per le vittime di Hiroshima (1960)',
-      spiegazione: 'Le fasce nere sono cluster: decine di archi che suonano note vicinissime tutte insieme. I cunei indicano glissandi, e i numeri sopra il pentagramma sono durate in secondi, non battute.'
-    },
-    {
-      genera: spartitoCage,
-      fonte: 'John Cage, Aria (1958)',
-      spiegazione: 'Nell\'Aria di Cage ogni colore è un diverso stile di canto (lirico, jazz, baby talk…) e i quadratini neri sono rumori a scelta dell\'interprete: uno schiocco, un colpo di tosse, quello che vuoi.'
-    },
-    {
-      genera: spartitoCardew,
-      fonte: 'Cornelius Cardew, Treatise (1963–67)',
-      spiegazione: 'Treatise è una partitura grafica di 193 pagine senza una sola istruzione: cerchi, linee e numeri che ogni musicista interpreta come crede. Cardew la chiamava «una partitura da leggere come si guarda un quadro».'
-    },
-    {
-      genera: spartitoCrumb,
-      fonte: 'George Crumb, Makrokosmos (1972–73)',
-      spiegazione: 'Crumb scriveva certi brani su pentagrammi circolari o a spirale: la forma della pagina racconta la musica. In Makrokosmos ci sono pagine a forma di croce, di cerchio e persino di spirale.'
-    },
-    {
-      genera: spartitoStockhausen,
-      fonte: 'Karlheinz Stockhausen, Studie II (1954)',
-      spiegazione: 'È una delle prime partiture di musica elettronica mai pubblicate: niente note, ma rettangoli che indicano frequenze e intensità dei suoni sintetici, su un asse del tempo in centimetri di nastro magnetico.'
-    }
+    { c: 'John Cage', o: 'Aria', a: '1958', g: gOndeColorate, p: {},
+      n: 'Ogni colore indica un diverso stile di canto (lirico, jazz, baby talk…) e i quadratini neri sono rumori a scelta dell\'interprete: uno schiocco, un colpo di tosse, quello che vuoi.' },
+    { c: 'John Cage', o: 'Fontana Mix', a: '1958', g: gPuntiLinee, p: { curva: true },
+      n: 'La partitura è fatta di fogli trasparenti con punti, linee e curve da sovrapporre a caso: ogni esecuzione nasce da una combinazione diversa.' },
+    { c: 'John Cage', o: 'Concert for Piano and Orchestra', a: '1957–58', g: gCaos, p: { pent: true, sparse: true },
+      n: 'Il solo pianoforte ha 63 pagine con 84 tipi di notazione diversi, da leggere in qualsiasi ordine. Il "direttore" non batte il tempo: le sue braccia sono le lancette di un orologio.' },
+    { c: 'John Cage', o: 'Water Music', a: '1952', g: gVoceProporzionale, p: { parole: ['RADIO', 'acqua', 'fischietto', 'mazzo di carte', 'pp', 'sff'] },
+      n: 'Il pianista deve anche versare acqua, usare una radio e un fischietto. La partitura si appende come un poster, perché anche il pubblico possa leggerla.' },
+    { c: 'John Cage', o: 'Ryoanji', a: '1983', g: gCurvePietre, p: {},
+      n: 'Le linee sono contorni di pietre disegnati ricalcando quelle del celebre giardino zen di Ryōan-ji a Kyoto: quindici pietre che diventano melodie.' },
+    { c: 'John Cage', o: '4&#8242;33&#8243;', a: '1952', g: gPaginaTacet, p: {},
+      n: 'Tre movimenti, tutti "tacet": l\'esecutore non suona nulla. Il brano è fatto dei suoni dell\'ambiente — e questa pagina quasi vuota è una vera partitura.' },
+    { c: 'John Cage', o: 'Variations I', a: '1958', g: gPuntiLinee, p: {},
+      n: 'Punti e linee su fogli trasparenti: dove cadono i punti rispetto alle linee decide altezza, durata e timbro. Ogni esecuzione è irripetibile.' },
+    { c: 'John Cage', o: 'Atlas Eclipticalis', a: '1961', g: gSciameDiPunti, p: { pent: true },
+      n: 'Cage ricopiò le posizioni delle stelle da un atlante astronomico e le trasformò in note: il cielo notturno diventato orchestra.' },
+    { c: 'Cornelius Cardew', o: 'Treatise', a: '1963–67', g: gGeometria, p: {},
+      n: '193 pagine di cerchi, linee e numeri senza una sola istruzione: ogni musicista la interpreta come crede. Una partitura da leggere come si guarda un quadro.' },
+    { c: 'Cornelius Cardew', o: 'Octet &#8217;61', a: '1961', g: gSimboli, p: {},
+      n: 'Sessanta segni numerati, ispirati a un quadro di Jasper Johns: sta all\'esecutore decidere come trasformarli in suono.' },
+    { c: 'Krzysztof Penderecki', o: 'Trenodia per le vittime di Hiroshima', a: '1960', g: gClusters, p: {},
+      n: 'Le fasce nere sono cluster: 52 archi che suonano note vicinissime tutte insieme. I numeri sopra il pentagramma sono durate in secondi, non battute.' },
+    { c: 'Krzysztof Penderecki', o: 'Fluorescences', a: '1962', g: gClusters, p: { denso: true },
+      n: 'In orchestra compaiono anche una sega, vetri sfregati e una macchina da scrivere. La notazione tradizionale, semplicemente, non bastava più.' },
+    { c: 'György Ligeti', o: 'Artikulation', a: '1958', g: gPartituraAscolto, p: {},
+      n: 'Questa è la celebre "partitura d\'ascolto" disegnata da Rainer Wehinger per il brano elettronico di Ligeti: ogni colore e forma corrisponde a un tipo di suono.' },
+    { c: 'György Ligeti', o: 'Volumina', a: '1962', g: gMasseNere, p: {},
+      n: 'Le masse nere sono cluster da suonare con palmi e avambracci su tutta la tastiera dell\'organo. Durante una prova l\'organo di Göteborg andò in sovraccarico: fumo dalle canne.' },
+    { c: 'Iannis Xenakis', o: 'Metastaseis', a: '1954', g: gFasciGlissando, p: {},
+      n: 'Ogni linea è un glissando di un singolo archi: Xenakis, che era anche architetto, progettò questi fasci come strutture. Dagli stessi disegni nacque il Padiglione Philips di Bruxelles.' },
+    { c: 'Iannis Xenakis', o: 'Pithoprakta', a: '1956', g: gSciameDiPunti, p: {},
+      n: 'Ogni punto è un pizzicato o un colpo di legno: nuvole di suoni calcolate con le leggi statistiche dei gas. La musica come sciame.' },
+    { c: 'Iannis Xenakis', o: 'Mycenae Alpha', a: '1978', g: gMasseUPIC, p: {},
+      n: 'Disegnata sull\'UPIC, il computer inventato da Xenakis che trasforma direttamente il disegno in suono: quello che vedi è letteralmente quello che senti.' },
+    { c: 'Karlheinz Stockhausen', o: 'Studie II', a: '1954', g: gBande, p: {},
+      n: 'Una delle prime partiture di musica elettronica mai pubblicate: niente note, ma rettangoli che indicano frequenze e intensità dei suoni sintetici su un asse del tempo.' },
+    { c: 'Karlheinz Stockhausen', o: 'Zyklus', a: '1959', g: gSimboli, p: {},
+      n: 'Il percussionista sta in mezzo a un cerchio di strumenti: può cominciare da qualsiasi pagina e leggere la partitura anche capovolta. "Zyklus" significa ciclo.' },
+    { c: 'Karlheinz Stockhausen', o: 'Plus-Minus', a: '1963', g: gPiuMeno, p: {},
+      n: 'Una tabella di più, meno e simboli: formule matematiche musicali che l\'esecutore deve "risolvere" per costruire la propria versione del pezzo.' },
+    { c: 'Karlheinz Stockhausen', o: 'Refrain', a: '1959', g: gClusters, p: { arco: true },
+      n: 'Sulla partitura è montata una striscia trasparente girevole: ruotandola, il "ritornello" di disturbo cade ogni volta in un punto diverso del brano.' },
+    { c: 'Morton Feldman', o: 'Projection 1', a: '1950', g: gGriglia, p: {},
+      n: 'Le caselle indicano solo registro alto, medio o basso: le note precise le sceglie l\'esecutore. Feldman voleva suoni "proiettati", liberi dal peso della tradizione.' },
+    { c: 'Morton Feldman', o: 'Intersection 2', a: '1951', g: gGriglia, p: { denso: true },
+      n: 'Scritta su carta millimetrata: ogni quadretto è un\'unità di tempo. Dentro la griglia, il pianista è libero; fuori, il tempo è implacabile.' },
+    { c: 'Earle Brown', o: 'December 1952', a: '1952', g: gRettangoliSparsi, p: {},
+      n: 'Rettangoli sospesi nel bianco, ispirati ai mobiles di Calder: si può leggere da qualsiasi direzione, anche capovolta. È una delle partiture grafiche più famose di sempre.' },
+    { c: 'Earle Brown', o: 'Available Forms I', a: '1961', g: gRiquadri, p: {},
+      n: 'Il direttore sceglie in diretta quale riquadro far suonare, indicandolo con un cartello numerato: la forma del brano nasce sul momento, ogni sera diversa.' },
+    { c: 'Luciano Berio', o: 'Sequenza III', a: '1965', g: gVoceProporzionale, p: { parole: ['tsk', 'hmm', '(risata)', 'pp', 'tenso', 'distante', 'frrr', 'oh'] },
+      n: 'Scritta per Cathy Berberian: risate, sospiri, colpi di tosse e bisbigli sono notati con precisione, insieme a 44 indicazioni di emozione come "tesa", "sognante", "distante".' },
+    { c: 'Cathy Berberian', o: 'Stripsody', a: '1966', g: gOnomatopee, p: {},
+      n: 'Una partitura fatta di onomatopee da fumetto: la cantante deve trasformarsi in un intero cartone animato. Le tavole originali le disegnò l\'illustratore Roberto Zamarin.' },
+    { c: 'Sylvano Bussotti', o: 'Five Piano Pieces for David Tudor', a: '1959', g: gCaos, p: { pent: true },
+      n: 'La calligrafia esplode: linee che attraversano i pentagrammi come schegge. Bussotti era anche pittore, e le sue partiture sono state esposte nei musei.' },
+    { c: 'Sylvano Bussotti', o: 'La Passion selon Sade', a: '1965', g: gCaos, p: { pent: true, colore: true },
+      n: 'Teatro musicale in cui la partitura stessa è un\'opera d\'arte visiva: segni, disegni e notazione si fondono nel "teatro della crudeltà" musicale di Bussotti.' },
+    { c: 'Domenico Guaccero', o: null, a: 'anni Sessanta', d: 'notazione gestuale', g: gCaos, p: {},
+      n: 'Protagonista dell\'avanguardia romana e tra i fondatori di Nuova Consonanza, Guaccero portò in partitura gesti, azioni sceniche e improvvisazione: il segno indica un\'azione, non solo un suono.' },
+    { c: 'Franco Donatoni', o: null, a: 'primi anni Sessanta', d: 'periodo aleatorio', g: gRiquadri, p: {},
+      n: 'Dopo l\'incontro con le idee di Cage, Donatoni attraversò una fase in cui il materiale musicale veniva ricombinato secondo procedimenti automatici e casuali, prima di approdare al suo celebre gioco di "trasformazioni".' },
+    { c: 'Mauricio Kagel', o: 'Sonant', a: '1960', g: gSimboli, p: {},
+      n: 'Kagel, maestro del "teatro strumentale", mescola notazione e istruzioni al limite dell\'assurdo: in alcune sue opere i musicisti devono anche recitare, camminare, sbagliare apposta.' },
+    { c: 'Roman Haubenstock-Ramati', o: 'Konstellationen', a: '1971', g: gFormeMobili, p: {},
+      n: 'Partiture "mobili" ispirate alle sculture di Calder: forme sospese da percorrere in qualsiasi ordine. Haubenstock-Ramati le esponeva anche come opere grafiche.' },
+    { c: 'Roman Haubenstock-Ramati', o: 'Mobile for Shakespeare', a: '1960', g: gFormeMobili, p: { colori: true },
+      n: 'Un "mobile" musicale su versi di Shakespeare: la cantante naviga tra le costellazioni di segni scegliendo la propria rotta a ogni esecuzione.' },
+    { c: 'Anestis Logothetis', o: 'Odyssee', a: '1963', g: gCurvePietre, p: { simboli: true },
+      n: 'Logothetis inventò una notazione "polimorfa": la stessa pagina può generare brani sempre diversi. I suoi segni indicano insieme altezza, gesto e carattere del suono.' },
+    { c: 'Christian Wolff', o: 'Edges', a: '1968', g: gSimboli, p: { sparse: true },
+      n: 'I segni non indicano i suoni da fare, ma i confini da non superare — o da sfiorare. Scritta per improvvisatori, è un campo da gioco più che uno spartito.' },
+    { c: 'Christian Wolff', o: 'For 1, 2 or 3 People', a: '1964', g: gSimboli, p: {},
+      n: 'Molti segni significano "suona solo dopo aver sentito l\'altro": la partitura obbliga i musicisti ad ascoltarsi, trasformando l\'esecuzione in una conversazione.' },
+    { c: 'La Monte Young', o: 'Composition 1960 #10', a: '1960', g: gLineaRetta, p: {},
+      n: 'L\'intera partitura è un\'istruzione: "Traccia una linea retta e seguila." La eseguì davvero, tracciando linee col gesso per ore. Il minimalismo iniziò anche così.' },
+    { c: 'Tōru Takemitsu', o: 'Corona', a: '1962', g: gCerchiPentagramma, p: { colori: true },
+      n: 'Cerchi colorati progettati con il grafico Kōhei Sugiura: i fogli si sovrappongono e ruotano come corone. Takemitsu la scrisse per pianista, non per pianoforte: la differenza è tutta lì.' },
+    { c: 'Witold Lutosławski', o: 'Jeux vénitiens', a: '1961', g: gRiquadri, p: {},
+      n: 'Nasce l\'"alea controllata": dentro i riquadri ogni musicista suona libero, senza sincronizzarsi con gli altri, ma il direttore decide quando si apre e si chiude ogni gabbia.' },
+    { c: 'Bruno Maderna', o: 'Serenata per un satellite', a: '1969', g: gPentagrammiCurvi, p: {},
+      n: 'Scritta per il lancio del satellite europeo ESRO-1: su un\'unica grande pagina i pentagrammi si incurvano e si incrociano come orbite. I musicisti li percorrono "volando" in qualsiasi ordine.' },
+    { c: 'Henri Pousseur', o: 'Scambi', a: '1957', g: gBande, p: { tratteggio: true },
+      n: 'Sequenze di nastro magnetico pensate per essere montate in ordini diversi: Pousseur invitava chiunque a costruire la propria versione. Un brano "open source" ante litteram.' },
+    { c: 'Dieter Schnebel', o: 'Glossolalie', a: '1961', g: gVoceProporzionale, p: { parole: ['scha', 'glo', 'ssss', 'la-la', 'brrr', 'ta-ke', 'mm'] },
+      n: 'Il titolo significa "parlare in lingue": sillabe, fonemi e lingue inventate diventano musica. Schnebel, che era anche pastore protestante, componeva perfino "musica da leggere" senza suono.' },
+    { c: 'R. Murray Schafer', o: 'Epitaph for Moonlight', a: '1968', g: gOndeColorate, p: { pastello: true, senzaQuadrati: true },
+      n: 'Scritta per coro giovanile: i cantori intonano parole inventate dagli studenti per dire "luce di luna". Schafer è lo stesso che inventò il concetto di "paesaggio sonoro".' },
+    { c: 'Bogusław Schaeffer', o: 'Nonstop', a: '1960', g: gFormeMobili, p: { colori: true },
+      n: 'Il pioniere polacco della notazione grafica: pittore, drammaturgo e compositore. Nonstop può durare ore: il pianista decide quando il labirinto grafico è finito.' },
+    { c: 'Luigi Russolo', o: 'Risveglio di una città', a: '1913', g: gLineeFuturiste, p: {},
+      n: 'Il futurista Russolo notava i suoi "intonarumori" con linee continue che salgono e scendono: niente note, ma traiettorie di rumore. Un secolo fa, già oltre il pentagramma.' },
+    { c: 'Giuseppe Chiari', o: null, a: 'anni Sessanta', d: 'partiture Fluxus', g: gCaos, p: { sparse: true },
+      n: 'Il fiorentino Chiari, anima di Fluxus, scriveva partiture-poesia: "Suona come senti il mare". Gesti, parole e segni valgono quanto le note. La sua massima: "L\'arte è facile".' },
+    { c: 'György Kurtág', o: 'Játékok', a: 'dal 1973', g: gClusters, p: { leggero: true },
+      n: '"Giochi", in ungherese: pezzi dove si suona anche con i palmi, i pugni e gli avambracci, notati con glifi speciali. Nati per far giocare i bambini col pianoforte, finiti nei recital dei grandi.' },
+    { c: 'Toshi Ichiyanagi', o: 'Sapporo', a: '1962', g: gSimboli, p: { sparse: true },
+      n: 'Allievo giapponese di Cage (e primo marito di Yoko Ono): segni sospesi nello spazio bianco, da leggere ascoltando gli altri. Il silenzio conta quanto il suono.' },
+    { c: 'Anthony Braxton', o: null, a: 'anni Settanta', d: 'partiture-diagramma', g: gDiagramma, p: {},
+      n: 'Il grande jazzista d\'avanguardia intitola le sue composizioni con veri diagrammi: forme geometriche, lettere e numeri. Perfino il titolo, per Braxton, è musica da decifrare.' },
+    { c: 'George Crumb', o: 'Makrokosmos', a: '1972–73', g: gCerchiPentagramma, p: {},
+      n: 'Crumb disegnava certe pagine a forma di cerchio, di croce e di spirale: la forma della partitura racconta la musica. E il pianoforte va suonato anche dentro, sulle corde.' },
+    { c: 'Karlheinz Stockhausen', o: 'Kontakte', a: '1958–60', g: gBande, p: {},
+      n: 'Per i suoni elettronici Stockhausen preparò una "partitura di realizzazione" fatta di fasce, curve e diagrammi: il contatto è quello tra suoni sintetici e strumenti dal vivo.' }
   ];
 
+  // ---------- CATALOGO: 50 SCARABOCCHI ----------
+
   const SCARABOCCHI = [
-    { genera: scarabocchioGhirigori, battuta: 'Questi sono i classici ghirigori da telefonata infinita con il call center.' },
-    { genera: scarabocchioGomitolo, battuta: 'Questo è il gomitolo rabbioso di chi è alla quarta ora di riunione.' },
-    { genera: scarabocchioSpiraleStelle, battuta: 'Spirali, stelle e cuoricini: il margine di un quaderno di terza media in tutto il suo splendore.' },
-    { genera: scarabocchioOnde, battuta: 'Solo onde tracciate a caso. Però ammettilo: un po\' Cage lo sembrava.' },
-    { genera: scarabocchioMacchie, battuta: 'Macchie riempite a tratteggio: la penna andava provata, no?' }
+    { g: dGhirigori, p: {}, b: 'Ghirigori da telefonata col call center: quaranta minuti di attesa, capolavoro assicurato.' },
+    { g: dGhirigori, p: {}, b: 'La penna andava, la testa era altrove.' },
+    { g: dGhirigori, p: {}, b: 'Ricciolini fatti mentre si diceva "sì sì, ti ascolto".' },
+    { g: dGomitolo, p: {}, b: 'Il gomitolo rabbioso della quarta ora di riunione.' },
+    { g: dGomitolo, p: {}, b: 'Qui qualcuno stava solo provando se la biro scriveva ancora.' },
+    { g: dGomitolo, p: {}, b: 'Nervosismo puro in forma grafica.' },
+    { g: dMargine, p: {}, b: 'Il margine del quaderno di terza media, in tutto il suo splendore.' },
+    { g: dMargine, p: {}, b: 'Stelline e cuoricini: l\'interrogazione era lunga.' },
+    { g: dMargine, p: {}, b: 'Spirali ipnotiche da lezione pomeridiana.' },
+    { g: dOnde, p: {}, b: 'Onde tracciate a caso. Però un po\' Cage lo sembrava, ammettilo.' },
+    { g: dOnde, p: {}, b: 'Il mare visto da chi non ascoltava la spiegazione.' },
+    { g: dOnde, p: {}, b: 'Linee ondulate senza secondi fini (musicali).' },
+    { g: dMacchie, p: {}, b: 'Macchie riempite a tratteggio: la penna nuova andava collaudata.' },
+    { g: dMacchie, p: {}, b: 'Nuvolette tratteggiate senza pretese d\'avanguardia.' },
+    { g: dMacchie, p: {}, b: 'Sassi? Patate? Nessuno lo saprà mai.' },
+    { g: dSchemino, p: {}, b: 'Uno schemino con le frecce: sembrava organizzato, non lo era.' },
+    { g: dSchemino, p: {}, b: 'Il diagramma di flusso di una decisione mai presa.' },
+    { g: dSchemino, p: {}, b: 'Scatolette e frecce: il piano infallibile scarabocchiato sul tovagliolo.' },
+    { g: dSchemino, p: {}, b: 'Sembra un Braxton? Quasi. È la mappa mentale per uscire dalla riunione.' },
+    { g: dFaccina, p: {}, b: 'Una caricatura del collega. Speriamo non la veda mai.' },
+    { g: dFaccina, p: {}, b: 'Faccine: l\'autoritratto involontario della noia.' },
+    { g: dFaccina, p: {}, b: 'Il professore visto dall\'ultimo banco.' },
+    { g: dFaccina, p: {}, b: 'Occhiali e baffi: chiunque fosse, ora ha una nuova identità.' },
+    { g: dOmini, p: {}, b: 'Omini stilizzati che fanno cose. Fine della storia.' },
+    { g: dOmini, p: {}, b: 'L\'omino che cammina: livello artistico da scuola dell\'infanzia, orgoglio massimo.' },
+    { g: dOmini, p: {}, b: 'Una scenetta a stecchini. Altro che teatro musicale di Kagel.' },
+    { g: dCasetta, p: {}, b: 'Casetta, sole e fiorellino: un classico intramontabile.' },
+    { g: dCasetta, p: {}, b: 'Il paesaggio ideale di chi era mentalmente già in vacanza.' },
+    { g: dCasetta, p: {}, b: 'Sole coi raggi e uccellini a V: nessuna avanguardia, solo nostalgia.' },
+    { g: dCubi, p: {}, b: 'Il cubo 3D: rito d\'iniziazione di ogni possessore di penna.' },
+    { g: dCubi, p: {}, b: 'Cubi in prospettiva: geometria descrittiva da bar.' },
+    { g: dCubi, p: {}, b: 'Chi disegna cubetti in riunione sta "prendendo appunti".' },
+    { g: dTris, p: {}, b: 'Un tris giocato da soli. Ha vinto la X, come sempre.' },
+    { g: dTris, p: {}, b: 'Tris: la partita clandestina dell\'ultima fila.' },
+    { g: dTris, p: {}, b: 'Griglie e crocette: campionato mondiale di noia.' },
+    { g: dScrittura, p: {}, b: 'Sembra una lingua antica: è solo finta scrittura da scarabocchio.' },
+    { g: dScrittura, p: {}, b: 'Righe di corsivo illeggibile: la firma provata quarantasette volte.' },
+    { g: dScrittura, p: {}, b: 'Parole inventate — e no, non è la Glossolalie di Schnebel.' },
+    { g: dOcchio, p: {}, b: 'L\'occhio con le ciglia: il disegno più riuscito di ogni annoiato cronico.' },
+    { g: dOcchio, p: {}, b: 'Un occhio che ti fissa dal margine del foglio.' },
+    { g: dOcchio, p: {}, b: 'Occhi e labbra: il ripasso di anatomia di chi non ascoltava.' },
+    { g: dRagnatela, p: {}, b: 'Una ragnatela senza ragno e senza pretese.' },
+    { g: dRagnatela, p: { mandala: true }, b: 'Un mandala improvvisato: meditazione da sala d\'attesa.' },
+    { g: dRagnatela, p: {}, b: 'Cerchi concentrici e raggi: no, stavolta Crumb non c\'entra.' },
+    { g: dLabirinto, p: {}, b: 'Un labirinto a spirale: la penna cercava l\'uscita dalla giornata.' },
+    { g: dLabirinto, p: {}, b: 'Greca ossessiva da bordo pagina.' },
+    { g: dFreccette, p: {}, b: 'Frecce, asterischi e sottolineature di appunti mai più riletti.' },
+    { g: dFreccette, p: {}, b: 'Frecce dappertutto: indicano tutte "basta, andiamo a casa".' },
+    { g: dRazzo, p: {}, b: 'Un razzo! Destinazione: fine della lezione.' },
+    { g: dRazzo, p: { barca: true }, b: 'Barchetta e pesciolini: si salpava con la fantasia.' }
   ];
 
   // ---------- LOGICA DI GIOCO ----------
@@ -546,10 +1485,10 @@
     return arr;
   }
 
-  // 5 spartiti e 5 scarabocchi a partita, in ordine casuale
+  // a ogni partita: 5 spartiti + 5 scarabocchi pescati dai cataloghi, in ordine casuale
   function preparaSequenza() {
-    const s = mescola(SPARTITI.slice()).map(v => ({ tipo: 'spartito', voce: v }));
-    const d = mescola(SCARABOCCHI.slice()).map(v => ({ tipo: 'scarabocchio', voce: v }));
+    const s = mescola(SPARTITI.slice()).slice(0, 5).map(v => ({ tipo: 'spartito', voce: v }));
+    const d = mescola(SCARABOCCHI.slice()).slice(0, 5).map(v => ({ tipo: 'scarabocchio', voce: v }));
     sequenza = mescola(s.concat(d));
   }
 
@@ -561,7 +1500,7 @@
     $('cornice').innerHTML =
       `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Immagine misteriosa numero ${round + 1}">` +
       `<rect width="${W}" height="${H}" fill="#fffefb"/>` +
-      corrente.voce.genera() +
+      corrente.voce.g(corrente.voce.p) +
       `</svg>`;
     $('esito').className = 'esito';
     $('esito').innerHTML = '';
@@ -583,10 +1522,13 @@
     const esito = $('esito');
     let html = `<div class="verdetto">${giusto ? '✔ Esatto!' : '✘ Ahi, no.'}</div>`;
     if (corrente.tipo === 'spartito') {
-      html += `<p>È uno <strong>spartito</strong>, ispirato a <span class="fonte">${corrente.voce.fonte}</span>.</p>`;
-      html += `<p>${corrente.voce.spiegazione}</p>`;
+      const v = corrente.voce;
+      const riferimento = v.o
+        ? `<span class="fonte">«${v.o}»</span> di <strong>${v.c}</strong> (${v.a})`
+        : `<strong>${v.c}</strong> — ${v.d} (${v.a})`;
+      html += `<p>È uno <strong>spartito</strong>, ispirato a ${riferimento}.</p><p>${v.n}</p>`;
     } else {
-      html += `<p>È uno <strong>scarabocchio</strong>. ${corrente.voce.battuta}</p>`;
+      html += `<p>È uno <strong>scarabocchio</strong>. ${corrente.voce.b}</p>`;
     }
     esito.innerHTML = html;
     esito.classList.add(giusto ? 'giusto' : 'sbagliato');
@@ -598,9 +1540,9 @@
   function titoloFinale(p) {
     if (p === 10) return ['Orecchio assoluto dell\'avanguardia', 'Perfetto. O hai studiato composizione a Darmstadt, o sei un pericoloso genio dell\'intuito. In entrambi i casi: chapeau.'];
     if (p >= 8)  return ['Critico musicale navigato', 'Quasi infallibile: distingui un cluster di Penderecki da un gomitolo di penna con sospetta disinvoltura.'];
-    if (p >= 6)  return ['Frequentatore di festival contemporanei', 'Buon fiuto! Qualche scarabocchio d\'autore ti ha fregato, ma succede anche ai migliori: era il piano dei compositori, in fondo.'];
+    if (p >= 6)  return ['Frequentatore di festival contemporanei', 'Buon fiuto! Qualche scarabocchio d\'autore ti ha ingannato, ma succede anche ai migliori: era il piano dei compositori, in fondo.'];
     if (p >= 4)  return ['Ascoltatore curioso', 'A metà strada: il confine tra arte e distrazione è più sottile di quanto sembri, e tu ne sei la prova vivente.'];
-    return ['Vittima designata dell\'avanguardia', 'Non ti abbattere: quando Cage presentò queste partiture, anche i musicisti professionisti reagirono esattamente come te.'];
+    return ['Vittima designata dell\'avanguardia', 'Non abbatterti: quando queste partiture apparvero per la prima volta, anche i musicisti professionisti reagirono esattamente come te.'];
   }
 
   function mostraFinale() {
