@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>È uno scarabocchio o uno spartito?</title>
+<style>
+  :root {
+    --carta: #f7f2e7;
+    --inchiostro: #2b2620;
+    --rosso: #b0413e;
+    --verde: #4a7c59;
+    --oro: #c9a227;
+    --ombra: rgba(43, 38, 32, 0.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--carta);
+    background-image: radial-gradient(circle at 20% 10%, rgba(201,162,39,0.06), transparent 40%),
+                      radial-gradient(circle at 80% 90%, rgba(176,65,62,0.05), transparent 40%);
+    color: var(--inchiostro);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 3rem;
+  }
+  header { text-align: center; max-width: 640px; margin-bottom: 1.2rem; }
+  h1 {
+    font-size: clamp(1.5rem, 4.5vw, 2.4rem);
+    font-style: italic;
+    letter-spacing: 0.01em;
+  }
+  h1 .oppure { color: var(--rosso); }
+  .sottotitolo {
+    margin-top: 0.5rem;
+    font-size: 0.98rem;
+    line-height: 1.5;
+    color: #5a5248;
+  }
+  .pannello {
+    width: 100%;
+    max-width: 680px;
+    background: #fffdf8;
+    border: 1px solid #d9d0bd;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px var(--ombra);
+    padding: 1.2rem;
+  }
+  .barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.95rem;
+    margin-bottom: 0.8rem;
+    color: #5a5248;
+  }
+  .barra strong { color: var(--inchiostro); font-size: 1.1rem; }
+  .cornice {
+    border: 1px solid #d9d0bd;
+    border-radius: 6px;
+    background: #fffefb;
+    overflow: hidden;
+  }
+  .cornice svg { display: block; width: 100%; height: auto; }
+  .bottoni {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+  button {
+    font-family: inherit;
+    font-size: 1.05rem;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 2px solid var(--inchiostro);
+    background: #fffdf8;
+    color: var(--inchiostro);
+    padding: 0.8rem 1rem;
+    flex: 1;
+    transition: transform 0.08s ease, background 0.15s ease;
+  }
+  button:hover { background: #f3ecdd; }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.45; cursor: default; transform: none; }
+  button.principale {
+    background: var(--inchiostro);
+    color: var(--carta);
+  }
+  button.principale:hover { background: #443c33; }
+  .esito {
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 8px;
+    line-height: 1.55;
+    font-size: 0.98rem;
+    display: none;
+  }
+  .esito.giusto { display: block; background: #e8f1ea; border: 1px solid var(--verde); }
+  .esito.sbagliato { display: block; background: #f6e7e6; border: 1px solid var(--rosso); }
+  .esito .verdetto { font-weight: bold; font-size: 1.05rem; }
+  .esito .fonte { font-style: italic; }
+  .nascosto { display: none !important; }
+  .finale { text-align: center; padding: 1rem 0.5rem; }
+  .finale .punteggione { font-size: 3rem; font-weight: bold; }
+  .finale .titolo-finale {
+    font-size: 1.3rem;
+    font-style: italic;
+    color: var(--rosso);
+    margin: 0.6rem 0 0.9rem;
+  }
+  .finale p { line-height: 1.55; color: #5a5248; max-width: 480px; margin: 0 auto 1rem; }
+  .avvio { text-align: center; padding: 0.5rem 0.5rem 1rem; }
+  .avvio p { line-height: 1.6; margin-bottom: 1rem; text-align: left; }
+  footer {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: #8a8072;
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.5;
+  }
+  @media (max-width: 480px) {
+    .bottoni { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>È uno scarabocchio <span class="oppure">o</span> uno spartito?</h1>
+  <p class="sottotitolo">Dagli anni Cinquanta in poi, molti compositori hanno abbandonato il pentagramma
+  per cerchi, macchie, linee ondulate e geometrie misteriose. Il risultato? Certe partiture
+  sembrano disegni fatti al telefono. Sapresti distinguerle?</p>
+</header>
+
+<div class="pannello">
+
+  <!-- Schermata iniziale -->
+  <div id="schermata-avvio" class="avvio">
+    <p>Ti mostrerò <strong>10 immagini</strong>. Alcune sono ispirate a vere tecniche di
+    <strong>notazione grafica</strong> usate da compositori come John Cage, Cornelius Cardew,
+    Krzysztof Penderecki, George Crumb e Karlheinz Stockhausen. Altre sono… scarabocchi e basta.</p>
+    <p>Per ogni immagine dovrai decidere: è la pagina di uno spartito d'avanguardia,
+    o il capolavoro distratto di una mano annoiata? Dopo ogni risposta scoprirai
+    la verità — e, quando è uno spartito, anche a quale opera si ispira.</p>
+    <button class="principale" id="btn-inizia">Inizia a giocare</button>
+  </div>
+
+  <!-- Schermata di gioco -->
+  <div id="schermata-gioco" class="nascosto">
+    <div class="barra">
+      <span>Immagine <strong id="num-round">1</strong> / 10</span>
+      <span>Punteggio: <strong id="punteggio">0</strong></span>
+    </div>
+    <div class="cornice" id="cornice"></div>
+    <div class="bottoni" id="bottoni-risposta">
+      <button id="btn-scarabocchio">🖍️ Scarabocchio</button>
+      <button id="btn-spartito">🎼 Spartito</button>
+    </div>
+    <div class="esito" id="esito"></div>
+    <div class="bottoni nascosto" id="bottoni-avanti">
+      <button class="principale" id="btn-avanti">Prossima immagine →</button>
+    </div>
+  </div>
+
+  <!-- Schermata finale -->
+  <div id="schermata-finale" class="finale nascosto">
+    <div class="punteggione"><span id="punteggio-finale">0</span>/10</div>
+    <div class="titolo-finale" id="titolo-finale"></div>
+    <p id="commento-finale"></p>
+    <p id="record" class="nascosto"></p>
+    <button class="principale" id="btn-rigioca">Gioca ancora</button>
+  </div>
+
+</div>
+
+<footer>
+  Tutte le immagini sono generate al momento: gli "spartiti" imitano lo stile di vere
+  partiture grafiche del Novecento, gli scarabocchi imitano… noi durante una riunione noiosa.
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- utilità casuali ----------
+  const rnd  = (a, b) => a + Math.random() * (b - a);
+  const rndi = (a, b) => Math.floor(rnd(a, b + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const chance = p => Math.random() < p;
+
+  const W = 640, H = 400;
+
+  // Traccia morbida che passa vicino ai punti dati (quadratiche concatenate)
+  function tracciaMorbida(punti) {
+    let d = `M ${punti[0][0].toFixed(1)} ${punti[0][1].toFixed(1)}`;
+    for (let i = 1; i < punti.length - 1; i++) {
+      const mx = (punti[i][0] + punti[i + 1][0]) / 2;
+      const my = (punti[i][1] + punti[i + 1][1]) / 2;
+      d += ` Q ${punti[i][0].toFixed(1)} ${punti[i][1].toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
+    }
+    const u = punti[punti.length - 1];
+    d += ` L ${u[0].toFixed(1)} ${u[1].toFixed(1)}`;
+    return d;
+  }
+
+  function ondaOrizzontale(x0, x1, y, ampiezza, passi) {
+    const punti = [];
+    for (let i = 0; i <= passi; i++) {
+      const x = x0 + (x1 - x0) * (i / passi);
+      punti.push([x, y + rnd(-ampiezza, ampiezza)]);
+    }
+    return tracciaMorbida(punti);
+  }
+
+  // ---------- GENERATORI DI SPARTITI ----------
+
+  // Stile Penderecki: pentagrammi, fasce nere a cluster, glissandi a cuneo
+  function spartitoPenderecki() {
+    let s = '';
+    const sistemi = [rnd(80, 110), rnd(255, 285)];
+    for (const yBase of sistemi) {
+      for (let l = 0; l < 5; l++) {
+        s += `<line x1="40" y1="${yBase + l * 13}" x2="${W - 40}" y2="${yBase + l * 13}" stroke="#2b2620" stroke-width="1"/>`;
+      }
+      const nEventi = rndi(3, 5);
+      for (let e = 0; e < nEventi; e++) {
+        const x = rnd(70, W - 140);
+        const tipo = rndi(0, 2);
+        if (tipo === 0) {
+          // cluster: banda nera irregolare sul pentagramma
+          const larg = rnd(35, 90);
+          const yTop = yBase + rnd(-8, 15);
+          const alt = rnd(20, 45);
+          s += `<path d="M ${x} ${yTop} L ${x + larg} ${yTop + rnd(-6, 6)} L ${x + larg + rnd(-5, 8)} ${yTop + alt} L ${x + rnd(-6, 6)} ${yTop + alt + rnd(-5, 5)} Z" fill="#2b2620"/>`;
+        } else if (tipo === 1) {
+          // cuneo di glissando
+          const larg = rnd(50, 110);
+          const y1 = yBase + rnd(0, 52), y2 = yBase + rnd(0, 52);
+          const apertura = rnd(8, 26);
+          s += `<path d="M ${x} ${y1} L ${x + larg} ${y2 - apertura / 2} L ${x + larg} ${y2 + apertura / 2} Z" fill="#2b2620"/>`;
+        } else {
+          // tacche verticali fitte (ripetizioni rapide)
+          const n = rndi(4, 9);
+          for (let t = 0; t < n; t++) {
+            const xt = x + t * rnd(5, 8);
+            s += `<line x1="${xt}" y1="${yBase + rnd(-4, 6)}" x2="${xt}" y2="${yBase + 52 + rnd(-6, 4)}" stroke="#2b2620" stroke-width="2.2"/>`;
+          }
+        }
+      }
+      // indicazione di durata in secondi, tipica delle partiture "a tempo spaziale"
+      if (chance(0.8)) {
+        s += `<text x="${rnd(80, W - 120)}" y="${yBase - 18}" font-family="Georgia, serif" font-size="14" fill="#2b2620">${rndi(4, 20)}&#8243;</text>`;
+      }
+    }
+    return s;
+  }
+
+  // Stile Cage, "Aria": linee vocali ondulate e colorate, quadratini neri
+  function spartitoCage() {
+    const colori = ['#b0413e', '#2b4a8b', '#4a7c59', '#7a4a8b', '#c9772a', '#2b2620'];
+    let s = '';
+    const nLinee = rndi(5, 7);
+    for (let i = 0; i < nLinee; i++) {
+      const x0 = rnd(40, 180);
+      const x1 = x0 + rnd(140, W - x0 - 50);
+      const y = rnd(50, H - 50);
+      const punti = [];
+      const passi = rndi(6, 12);
+      for (let p = 0; p <= passi; p++) {
+        punti.push([x0 + (x1 - x0) * (p / passi), y + rnd(-38, 38)]);
+      }
+      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="${pick(colori)}" stroke-width="${rnd(3, 7).toFixed(1)}" stroke-linecap="round"/>`;
+    }
+    // quadratini neri: nell'Aria indicano rumori non musicali
+    const nQuadrati = rndi(3, 6);
+    for (let q = 0; q < nQuadrati; q++) {
+      const lato = rnd(7, 13);
+      s += `<rect x="${rnd(50, W - 60)}" y="${rnd(40, H - 50)}" width="${lato.toFixed(1)}" height="${lato.toFixed(1)}" fill="#2b2620"/>`;
+    }
+    return s;
+  }
+
+  // Stile Cardew, "Treatise": linea di vita centrale, cerchi, geometrie astratte
+  function spartitoCardew() {
+    let s = '';
+    const yVita = H / 2 + rnd(-25, 25);
+    s += `<line x1="30" y1="${yVita}" x2="${W - 30}" y2="${yVita}" stroke="#2b2620" stroke-width="3.5"/>`;
+    const nCerchi = rndi(2, 4);
+    for (let c = 0; c < nCerchi; c++) {
+      const r = c === 0 ? rnd(45, 75) : rnd(10, 35);
+      s += `<circle cx="${rnd(90, W - 90)}" cy="${rnd(70, H - 70)}" r="${r.toFixed(1)}" fill="none" stroke="#2b2620" stroke-width="${rnd(1.5, 3).toFixed(1)}"/>`;
+    }
+    const nLinee = rndi(3, 6);
+    for (let l = 0; l < nLinee; l++) {
+      const x = rnd(60, W - 160);
+      s += `<line x1="${x}" y1="${rnd(40, H - 40)}" x2="${x + rnd(60, 150)}" y2="${rnd(40, H - 40)}" stroke="#2b2620" stroke-width="${rnd(1, 2.5).toFixed(1)}"/>`;
+    }
+    for (let p = 0; p < rndi(3, 7); p++) {
+      s += `<circle cx="${rnd(50, W - 50)}" cy="${rnd(40, H - 40)}" r="${rnd(2, 4).toFixed(1)}" fill="#2b2620"/>`;
+    }
+    if (chance(0.7)) {
+      s += `<text x="${rnd(60, W - 80)}" y="${rnd(50, H - 50)}" font-family="Georgia, serif" font-size="16" fill="#2b2620">${rndi(1, 34)}</text>`;
+    }
+    if (chance(0.5)) {
+      s += `<rect x="${rnd(60, W - 130)}" y="${rnd(50, H - 100)}" width="${rnd(30, 70).toFixed(1)}" height="${rnd(15, 40).toFixed(1)}" fill="none" stroke="#2b2620" stroke-width="1.8"/>`;
+    }
+    return s;
+  }
+
+  // Stile Crumb: pentagramma circolare con note lungo l'anello
+  function spartitoCrumb() {
+    let s = '';
+    const cx = W / 2 + rnd(-40, 40), cy = H / 2 + rnd(-15, 15);
+    const rBase = rnd(95, 125);
+    for (let l = 0; l < 5; l++) {
+      s += `<circle cx="${cx}" cy="${cy}" r="${(rBase + l * 9).toFixed(1)}" fill="none" stroke="#2b2620" stroke-width="1"/>`;
+    }
+    const nNote = rndi(9, 16);
+    for (let n = 0; n < nNote; n++) {
+      const ang = rnd(0, Math.PI * 2);
+      const r = rBase + rnd(0, 36);
+      const x = cx + Math.cos(ang) * r;
+      const y = cy + Math.sin(ang) * r;
+      const rot = (ang * 180 / Math.PI + 90).toFixed(1);
+      s += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5" ry="3.6" fill="#2b2620" transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+      if (chance(0.7)) {
+        const sx = x + Math.cos(ang + Math.PI / 2) * 4;
+        const sy = y + Math.sin(ang + Math.PI / 2) * 4;
+        s += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${(sx + Math.cos(ang) * 20).toFixed(1)}" y2="${(sy + Math.sin(ang) * 20).toFixed(1)}" stroke="#2b2620" stroke-width="1.6"/>`;
+      }
+    }
+    // legature che attraversano il cerchio
+    for (let a = 0; a < rndi(1, 3); a++) {
+      const a1 = rnd(0, Math.PI * 2), a2 = a1 + rnd(0.8, 2.5);
+      const r = rBase + rnd(5, 30);
+      const x1 = cx + Math.cos(a1) * r, y1 = cy + Math.sin(a1) * r;
+      const x2 = cx + Math.cos(a2) * r, y2 = cy + Math.sin(a2) * r;
+      s += `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx} ${cy} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="#2b2620" stroke-width="1.2"/>`;
+    }
+    return s;
+  }
+
+  // Stile Stockhausen, studio elettronico: bande, asse dei tempi, griglia
+  function spartitoStockhausen() {
+    let s = '';
+    const yAsse = H - 60;
+    s += `<line x1="40" y1="${yAsse}" x2="${W - 40}" y2="${yAsse}" stroke="#2b2620" stroke-width="1.5"/>`;
+    for (let t = 0; t <= 10; t++) {
+      const x = 40 + (W - 80) * (t / 10);
+      s += `<line x1="${x.toFixed(1)}" y1="${yAsse}" x2="${x.toFixed(1)}" y2="${yAsse + 7}" stroke="#2b2620" stroke-width="1.2"/>`;
+      if (t % 2 === 0) {
+        s += `<text x="${(x - 6).toFixed(1)}" y="${yAsse + 24}" font-family="Georgia, serif" font-size="11" fill="#2b2620">${t * rndi(2, 4)}</text>`;
+      }
+      s += `<line x1="${x.toFixed(1)}" y1="40" x2="${x.toFixed(1)}" y2="${yAsse}" stroke="#2b2620" stroke-width="0.5" stroke-dasharray="2 5" opacity="0.5"/>`;
+    }
+    const nBande = rndi(7, 12);
+    const grigi = ['#2b2620', '#4d453a', '#6e6455', '#8a8072'];
+    for (let b = 0; b < nBande; b++) {
+      const x = rnd(45, W - 140);
+      const larg = rnd(30, 110);
+      const y = rnd(45, yAsse - 60);
+      const alt = rnd(6, 34);
+      if (chance(0.6)) {
+        s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${larg.toFixed(1)}" height="${alt.toFixed(1)}" fill="${pick(grigi)}" opacity="${rnd(0.55, 0.95).toFixed(2)}"/>`;
+      } else {
+        // trapezio: suono che cresce o cala d'intensità
+        const alt2 = rnd(4, 30);
+        s += `<path d="M ${x} ${y} L ${x + larg} ${y + (alt - alt2) / 2} L ${x + larg} ${y + (alt + alt2) / 2} L ${x} ${y + alt} Z" fill="${pick(grigi)}" opacity="${rnd(0.55, 0.95).toFixed(2)}"/>`;
+      }
+    }
+    return s;
+  }
+
+  // ---------- GENERATORI DI SCARABOCCHI ----------
+
+  // Ghirigori: catene di riccioli come su un block-notes durante una telefonata
+  function scarabocchioGhirigori() {
+    let s = '';
+    const nCatene = rndi(2, 4);
+    for (let c = 0; c < nCatene; c++) {
+      let x = rnd(60, 200), y = rnd(70, H - 70);
+      let d = `M ${x.toFixed(1)} ${y.toFixed(1)}`;
+      const nRicci = rndi(5, 10);
+      for (let r = 0; r < nRicci; r++) {
+        const passo = rnd(28, 55);
+        const su = rnd(25, 55) * (chance(0.5) ? 1 : -1);
+        d += ` c ${(passo * 0.2).toFixed(1)} ${(-su).toFixed(1)}, ${(passo * 0.9).toFixed(1)} ${(-su).toFixed(1)}, ${(passo * 0.55).toFixed(1)} 0`
+           + ` c ${(-passo * 0.3).toFixed(1)} ${(su * 0.8).toFixed(1)}, ${(passo * 0.5).toFixed(1)} ${(su * 0.9).toFixed(1)}, ${passo.toFixed(1)} ${rnd(-14, 14).toFixed(1)}`;
+        x += passo * 1.55;
+        if (x > W - 80) break;
+      }
+      s += `<path d="${d}" fill="none" stroke="#2b2620" stroke-width="${rnd(1.8, 3).toFixed(1)}" stroke-linecap="round"/>`;
+    }
+    return s;
+  }
+
+  // Gomitolo rabbioso: zigzag fittissimo dentro una zona
+  function scarabocchioGomitolo() {
+    let s = '';
+    const nGomitoli = rndi(1, 3);
+    for (let g = 0; g < nGomitoli; g++) {
+      const cx = rnd(140, W - 140), cy = rnd(110, H - 110);
+      const rx = rnd(55, 130), ry = rnd(40, 90);
+      const punti = [];
+      const n = rndi(28, 55);
+      for (let i = 0; i < n; i++) {
+        punti.push([cx + rnd(-rx, rx), cy + rnd(-ry, ry)]);
+      }
+      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="#2b2620" stroke-width="${rnd(1.5, 2.6).toFixed(1)}" stroke-linecap="round"/>`;
+    }
+    return s;
+  }
+
+  // Margine di quaderno: spirali, stelle e cuoricini sparsi
+  function scarabocchioSpiraleStelle() {
+    let s = '';
+    for (let sp = 0; sp < rndi(2, 4); sp++) {
+      const cx = rnd(80, W - 80), cy = rnd(70, H - 70);
+      const giri = rnd(2.5, 4.5);
+      let d = `M ${cx} ${cy}`;
+      for (let t = 0; t <= giri * Math.PI * 2; t += 0.25) {
+        const r = 2.5 * t;
+        d += ` L ${(cx + Math.cos(t) * r).toFixed(1)} ${(cy + Math.sin(t) * r).toFixed(1)}`;
+      }
+      s += `<path d="${d}" fill="none" stroke="#2b2620" stroke-width="2" stroke-linecap="round"/>`;
+    }
+    for (let st = 0; st < rndi(2, 4); st++) {
+      const cx = rnd(60, W - 60), cy = rnd(50, H - 50);
+      const rEst = rnd(14, 26), rInt = rEst * 0.42;
+      let d = '';
+      for (let p = 0; p < 10; p++) {
+        const ang = -Math.PI / 2 + p * Math.PI / 5;
+        const r = p % 2 === 0 ? rEst : rInt;
+        d += (p === 0 ? 'M ' : 'L ') + (cx + Math.cos(ang) * r).toFixed(1) + ' ' + (cy + Math.sin(ang) * r).toFixed(1) + ' ';
+      }
+      s += `<path d="${d}Z" fill="none" stroke="#2b2620" stroke-width="2" stroke-linejoin="round"/>`;
+    }
+    for (let cu = 0; cu < rndi(1, 3); cu++) {
+      const cx = rnd(60, W - 60), cy = rnd(60, H - 50);
+      const dim = rnd(10, 20);
+      s += `<path d="M ${cx} ${cy + dim * 0.8} C ${cx - dim * 1.4} ${cy - dim * 0.4}, ${cx - dim * 0.5} ${cy - dim * 1.2}, ${cx} ${cy - dim * 0.3}`
+         + ` C ${cx + dim * 0.5} ${cy - dim * 1.2}, ${cx + dim * 1.4} ${cy - dim * 0.4}, ${cx} ${cy + dim * 0.8} Z"`
+         + ` fill="none" stroke="#2b2620" stroke-width="2" stroke-linejoin="round"/>`;
+    }
+    return s;
+  }
+
+  // Onde distratte con nodi: il più infido, somiglia all'Aria di Cage
+  function scarabocchioOnde() {
+    let s = '';
+    const nOnde = rndi(4, 7);
+    for (let o = 0; o < nOnde; o++) {
+      const y = 40 + (H - 80) * (o / nOnde) + rnd(-15, 15);
+      s += `<path d="${ondaOrizzontale(rnd(40, 90), rnd(W - 120, W - 40), y, rnd(6, 22), rndi(8, 16))}" fill="none" stroke="#2b2620" stroke-width="${rnd(1.5, 3).toFixed(1)}" stroke-linecap="round"/>`;
+    }
+    // nodi: piccoli grovigli dove la penna ha insistito
+    for (let n = 0; n < rndi(2, 5); n++) {
+      const cx = rnd(80, W - 80), cy = rnd(60, H - 60);
+      const punti = [];
+      for (let i = 0; i < 12; i++) punti.push([cx + rnd(-14, 14), cy + rnd(-12, 12)]);
+      s += `<path d="${tracciaMorbida(punti)}" fill="none" stroke="#2b2620" stroke-width="1.8"/>`;
+    }
+    return s;
+  }
+
+  // Macchie chiuse con tratteggio di riempimento
+  function scarabocchioMacchie() {
+    let s = '';
+    const nMacchie = rndi(2, 4);
+    for (let m = 0; m < nMacchie; m++) {
+      const cx = rnd(120, W - 120), cy = rnd(90, H - 90);
+      const punti = [];
+      const n = rndi(7, 11);
+      const rMed = rnd(35, 80);
+      for (let i = 0; i <= n; i++) {
+        const ang = (i / n) * Math.PI * 2;
+        const r = rMed * rnd(0.6, 1.3);
+        punti.push([cx + Math.cos(ang) * r, cy + Math.sin(ang) * r * 0.75]);
+      }
+      punti.push(punti[0]);
+      s += `<path d="${tracciaMorbida(punti)} Z" fill="none" stroke="#2b2620" stroke-width="2.2"/>`;
+      if (chance(0.6)) {
+        // tratteggio interno
+        for (let t = -rMed; t < rMed; t += rnd(6, 10)) {
+          s += `<line x1="${(cx + t - 12).toFixed(1)}" y1="${(cy + rMed * 0.55).toFixed(1)}" x2="${(cx + t + 12).toFixed(1)}" y2="${(cy - rMed * 0.55).toFixed(1)}" stroke="#2b2620" stroke-width="1" opacity="0.7"/>`;
+        }
+      }
+    }
+    return s;
+  }
+
+  // ---------- CATALOGO ----------
+
+  const SPARTITI = [
+    {
+      genera: spartitoPenderecki,
+      fonte: 'Krzysztof Penderecki, Trenodia per le vittime di Hiroshima (1960)',
+      spiegazione: 'Le fasce nere sono cluster: decine di archi che suonano note vicinissime tutte insieme. I cunei indicano glissandi, e i numeri sopra il pentagramma sono durate in secondi, non battute.'
+    },
+    {
+      genera: spartitoCage,
+      fonte: 'John Cage, Aria (1958)',
+      spiegazione: 'Nell\'Aria di Cage ogni colore è un diverso stile di canto (lirico, jazz, baby talk…) e i quadratini neri sono rumori a scelta dell\'interprete: uno schiocco, un colpo di tosse, quello che vuoi.'
+    },
+    {
+      genera: spartitoCardew,
+      fonte: 'Cornelius Cardew, Treatise (1963–67)',
+      spiegazione: 'Treatise è una partitura grafica di 193 pagine senza una sola istruzione: cerchi, linee e numeri che ogni musicista interpreta come crede. Cardew la chiamava «una partitura da leggere come si guarda un quadro».'
+    },
+    {
+      genera: spartitoCrumb,
+      fonte: 'George Crumb, Makrokosmos (1972–73)',
+      spiegazione: 'Crumb scriveva certi brani su pentagrammi circolari o a spirale: la forma della pagina racconta la musica. In Makrokosmos ci sono pagine a forma di croce, di cerchio e persino di spirale.'
+    },
+    {
+      genera: spartitoStockhausen,
+      fonte: 'Karlheinz Stockhausen, Studie II (1954)',
+      spiegazione: 'È una delle prime partiture di musica elettronica mai pubblicate: niente note, ma rettangoli che indicano frequenze e intensità dei suoni sintetici, su un asse del tempo in centimetri di nastro magnetico.'
+    }
+  ];
+
+  const SCARABOCCHI = [
+    { genera: scarabocchioGhirigori, battuta: 'Questi sono i classici ghirigori da telefonata infinita con il call center.' },
+    { genera: scarabocchioGomitolo, battuta: 'Questo è il gomitolo rabbioso di chi è alla quarta ora di riunione.' },
+    { genera: scarabocchioSpiraleStelle, battuta: 'Spirali, stelle e cuoricini: il margine di un quaderno di terza media in tutto il suo splendore.' },
+    { genera: scarabocchioOnde, battuta: 'Solo onde tracciate a caso. Però ammettilo: un po\' Cage lo sembrava.' },
+    { genera: scarabocchioMacchie, battuta: 'Macchie riempite a tratteggio: la penna andava provata, no?' }
+  ];
+
+  // ---------- LOGICA DI GIOCO ----------
+
+  const TOT_ROUND = 10;
+  let round = 0, punteggio = 0, rispostaData = false;
+  let sequenza = [], corrente = null;
+
+  const $ = id => document.getElementById(id);
+
+  function mescola(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // 5 spartiti e 5 scarabocchi a partita, in ordine casuale
+  function preparaSequenza() {
+    const s = mescola(SPARTITI.slice()).map(v => ({ tipo: 'spartito', voce: v }));
+    const d = mescola(SCARABOCCHI.slice()).map(v => ({ tipo: 'scarabocchio', voce: v }));
+    sequenza = mescola(s.concat(d));
+  }
+
+  function mostraRound() {
+    corrente = sequenza[round];
+    rispostaData = false;
+    $('num-round').textContent = round + 1;
+    $('punteggio').textContent = punteggio;
+    $('cornice').innerHTML =
+      `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Immagine misteriosa numero ${round + 1}">` +
+      `<rect width="${W}" height="${H}" fill="#fffefb"/>` +
+      corrente.voce.genera() +
+      `</svg>`;
+    $('esito').className = 'esito';
+    $('esito').innerHTML = '';
+    $('bottoni-avanti').classList.add('nascosto');
+    $('btn-scarabocchio').disabled = false;
+    $('btn-spartito').disabled = false;
+  }
+
+  function rispondi(scelta) {
+    if (rispostaData) return;
+    rispostaData = true;
+    $('btn-scarabocchio').disabled = true;
+    $('btn-spartito').disabled = true;
+
+    const giusto = scelta === corrente.tipo;
+    if (giusto) punteggio++;
+    $('punteggio').textContent = punteggio;
+
+    const esito = $('esito');
+    let html = `<div class="verdetto">${giusto ? '✔ Esatto!' : '✘ Ahi, no.'}</div>`;
+    if (corrente.tipo === 'spartito') {
+      html += `<p>È uno <strong>spartito</strong>, ispirato a <span class="fonte">${corrente.voce.fonte}</span>.</p>`;
+      html += `<p>${corrente.voce.spiegazione}</p>`;
+    } else {
+      html += `<p>È uno <strong>scarabocchio</strong>. ${corrente.voce.battuta}</p>`;
+    }
+    esito.innerHTML = html;
+    esito.classList.add(giusto ? 'giusto' : 'sbagliato');
+
+    $('btn-avanti').textContent = round + 1 === TOT_ROUND ? 'Vedi il risultato →' : 'Prossima immagine →';
+    $('bottoni-avanti').classList.remove('nascosto');
+  }
+
+  function titoloFinale(p) {
+    if (p === 10) return ['Orecchio assoluto dell\'avanguardia', 'Perfetto. O hai studiato composizione a Darmstadt, o sei un pericoloso genio dell\'intuito. In entrambi i casi: chapeau.'];
+    if (p >= 8)  return ['Critico musicale navigato', 'Quasi infallibile: distingui un cluster di Penderecki da un gomitolo di penna con sospetta disinvoltura.'];
+    if (p >= 6)  return ['Frequentatore di festival contemporanei', 'Buon fiuto! Qualche scarabocchio d\'autore ti ha fregato, ma succede anche ai migliori: era il piano dei compositori, in fondo.'];
+    if (p >= 4)  return ['Ascoltatore curioso', 'A metà strada: il confine tra arte e distrazione è più sottile di quanto sembri, e tu ne sei la prova vivente.'];
+    return ['Vittima designata dell\'avanguardia', 'Non ti abbattere: quando Cage presentò queste partiture, anche i musicisti professionisti reagirono esattamente come te.'];
+  }
+
+  function mostraFinale() {
+    $('schermata-gioco').classList.add('nascosto');
+    $('schermata-finale').classList.remove('nascosto');
+    $('punteggio-finale').textContent = punteggio;
+    const [titolo, commento] = titoloFinale(punteggio);
+    $('titolo-finale').textContent = titolo;
+    $('commento-finale').textContent = commento;
+
+    try {
+      const record = Math.max(punteggio, parseInt(localStorage.getItem('scarabocchio-record') || '0', 10));
+      localStorage.setItem('scarabocchio-record', String(record));
+      const el = $('record');
+      el.textContent = record > punteggio ? `Il tuo record resta ${record}/10.` :
+                       punteggio > 0 ? `Nuovo record personale: ${punteggio}/10!` : '';
+      el.classList.toggle('nascosto', el.textContent === '');
+    } catch (e) { /* localStorage non disponibile: nessun record, nessun dramma */ }
+  }
+
+  function iniziaPartita() {
+    round = 0;
+    punteggio = 0;
+    preparaSequenza();
+    $('schermata-avvio').classList.add('nascosto');
+    $('schermata-finale').classList.add('nascosto');
+    $('schermata-gioco').classList.remove('nascosto');
+    mostraRound();
+  }
+
+  $('btn-inizia').addEventListener('click', iniziaPartita);
+  $('btn-rigioca').addEventListener('click', iniziaPartita);
+  $('btn-scarabocchio').addEventListener('click', () => rispondi('scarabocchio'));
+  $('btn-spartito').addEventListener('click', () => rispondi('spartito'));
+  $('btn-avanti').addEventListener('click', () => {
+    round++;
+    if (round >= TOT_ROUND) mostraFinale();
+    else mostraRound();
+  });
+})();
+</script>
+</body>
+</html>
