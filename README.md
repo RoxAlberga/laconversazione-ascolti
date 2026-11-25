@@ -34,3 +34,5 @@ Attivazione (una volta sola, circa 5 minuti):
 5. Nel blocco HTML sostituisci `[EMAIL DI CONTATTO]` (informativa privacy) con l'indirizzo a cui ricevere le richieste sui dati.
 
 Gli iscritti compaiono nel foglio "Iscrizioni": data, email, giorno preferito, stato (Confermato / Lista d'attesa), newsletter (Sì/No), data del consenso. Per l'Excel: **File → Scarica → Microsoft Excel (.xlsx)**. Chi si iscrive due volte con la stessa email aggiorna la propria scelta senza contare un doppio voto.
+
+Newsletter (Substack): la scheda "Per Substack" del foglio elenca solo le email di chi ha spuntato la newsletter. Seleziona la colonna, copia, e in Substack vai su **Subscribers → Add subscribers**, incolla le email e conferma (in alternativa: **File → Scarica → CSV** della scheda e caricalo nello stesso punto).

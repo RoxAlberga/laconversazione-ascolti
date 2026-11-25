@@ -30,6 +30,12 @@ function foglio_() {
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, COLONNE.length).setFontWeight('bold');
   }
+  // Scheda "Per Substack": solo le email di chi ha chiesto la newsletter, pronte da copiare.
+  if (!ss.getSheetByName('Per Substack')) {
+    const ns = ss.insertSheet('Per Substack');
+    ns.getRange('A1').setValue('email').setFontWeight('bold');
+    ns.getRange('A2').setFormula('=IFERROR(FILTER(' + NOME_FOGLIO + '!B2:B, ' + NOME_FOGLIO + '!E2:E="Sì"), "")');
+  }
   return sh;
 }
 
